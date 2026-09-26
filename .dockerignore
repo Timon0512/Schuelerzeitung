@@ -1,0 +1,13 @@
+**
+!pyproject.toml
+!uv.lock
+!manage.py
+!config/**
+!accounts/**
+!news/**
+!submissions/**
+!reactions/**
+!templates/**
+!deploy/gunicorn.conf.py
+**/__pycache__/**
+**/*.pyc

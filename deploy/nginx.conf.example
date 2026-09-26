@@ -1,0 +1,45 @@
+# Include inside nginx's http context. Replace domain and certificate paths.
+limit_req_zone $binary_remote_addr zone=kaktus_login:10m rate=5r/m;
+server {
+    listen 80;
+    server_name zeitung.example.invalid;
+    return 308 https://zeitung.example.invalid$request_uri;
+}
+server {
+    listen 443 ssl;
+    server_name zeitung.example.invalid;
+    ssl_certificate /etc/letsencrypt/live/zeitung.example.invalid/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/zeitung.example.invalid/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    client_max_body_size 11m;
+    client_body_timeout 15s;
+    access_log off;
+    error_log /var/log/nginx/kaktus-error.log warn;
+    # No media alias, even for currently published images.
+    location ^~ /media/ { return 404; }
+    location ^~ /protected-files/ { return 404; }
+    location ^~ /static/ {
+        alias /srv/kaktus/static/;
+        autoindex off;
+        add_header X-Content-Type-Options nosniff always;
+    }
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host zeitung.example.invalid;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Host "";
+        proxy_cache off;
+        proxy_read_timeout 65s;
+    }
+    location = /admin/login/ {
+        limit_req zone=kaktus_login burst=5 nodelay;
+        limit_req_status 429;
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host zeitung.example.invalid;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Host "";
+        proxy_cache off;
+    }
+}
