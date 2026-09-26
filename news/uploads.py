@@ -1,4 +1,5 @@
 from io import BytesIO
+from django.conf import settings
 import warnings
 from PIL import Image, ImageOps, UnidentifiedImageError
 from django.core.exceptions import ValidationError
@@ -10,17 +11,19 @@ MAX_PIXELS = 25_000_000
 
 def decode_image(upload):
     """Ignore names/MIME claims; fully decode and encode fresh pixels without metadata."""
-    data = upload.read(MAX_BYTES + 1)
-    if not data or len(data) > MAX_BYTES:
-        raise ValidationError("Bitte ein Bild mit höchstens 10 MB auswählen.")
+    max_bytes = min(MAX_BYTES, settings.IMAGE_MAX_BYTES)
+    max_pixels = min(MAX_PIXELS, settings.IMAGE_MAX_PIXELS)
+    data = upload.read(max_bytes + 1)
+    if not data or len(data) > max_bytes:
+        raise ValidationError(f"Bitte ein Bild mit höchstens {max_bytes / 1024 / 1024:g} MB auswählen.")
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("error", Image.DecompressionBombWarning)
             with Image.open(BytesIO(data)) as source:
                 if source.format not in {"JPEG", "PNG", "WEBP"}:
                     raise ValidationError("Erlaubt sind JPEG, PNG und WebP.")
-                if source.width * source.height > MAX_PIXELS:
-                    raise ValidationError("Das Bild darf höchstens 25 Megapixel haben.")
+                if source.width * source.height > max_pixels:
+                    raise ValidationError(f"Das Bild darf höchstens {max_pixels / 1000000:g} Megapixel haben.")
                 if getattr(source, "n_frames", 1) != 1:
                     raise ValidationError("Bitte ein unbewegtes Bild auswählen.")
                 source.load()
@@ -30,8 +33,8 @@ def decode_image(upload):
                 fresh.paste(pixels)
                 output = BytesIO()
                 fresh.save(output, format="WEBP", quality=88)
-                if output.tell() > MAX_BYTES:
-                    raise ValidationError("Das verarbeitete Bild überschreitet 10 MB.")
+                if output.tell() > max_bytes:
+                    raise ValidationError("Das verarbeitete Bild überschreitet die erlaubte Dateigröße.")
                 return ContentFile(output.getvalue(), name="image.webp"), fresh.width, fresh.height
     except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError, Image.DecompressionBombWarning) as exc:
         raise ValidationError("Das Bild ist beschädigt oder kann nicht sicher geöffnet werden.") from exc

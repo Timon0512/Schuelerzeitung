@@ -104,7 +104,7 @@ class PublicPageTests(TestCase):
             setting.save()
             self.assertEqual(self.client.get('/zeitungslogo').status_code, 404)
 
-    def test_prepared_submission_is_read_only(self):
-        self.assertContains(self.client.get('/artikel-einreichen'), '<fieldset disabled')
-        self.assertEqual(self.client.post('/artikel-einreichen', {'name':'Privat'}).status_code, 405)
+    def test_submission_validates_before_writing(self):
+        self.assertNotContains(self.client.get('/artikel-einreichen'), '<fieldset disabled')
+        self.assertEqual(self.client.post('/artikel-einreichen', {'name':'Privat'}).status_code, 400)
         self.assertEqual(Submission.objects.count(), 0)

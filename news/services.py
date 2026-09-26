@@ -13,7 +13,7 @@ def selectable_media(user, article=None):
     # Submission attachments must first be explicitly converted into an article.
     if not user or not user.is_active or not user.has_perm("news.view_media"):
         return Media.objects.none()
-    query = Q(uploaded_by__isnull=False, submission__isnull=True)
+    query = Q(uploaded_by__isnull=False, submission__isnull=True, submission_origin=False)
     if article and article.pk:
         query |= Q(placements__article=article) | Q(hero_articles=article)
     return Media.objects.filter(query).distinct()

@@ -7,6 +7,30 @@ from django.utils.text import slugify
 from news.models import Article, content_lock
 from news.services import require_editor
 from .models import Submission
+from django.views.decorators.debug import sensitive_variables
+
+
+@sensitive_variables()
+def receive_submission(form):
+    """Only accept a validated form; clean up storage if the database write fails."""
+    if not form.is_valid():
+        raise ValueError("Ungültiges Formular")
+    from news.models import Media
+    data = form.cleaned_data
+    media = None
+    try:
+        with transaction.atomic():
+            if data.get("image"):
+                file, width, height = data["image"]
+                media = Media(file=file, width=width, height=height, size=file.size,
+                              mime_type="image/webp", submission_origin=True)
+                media.save()
+            return Submission.objects.create(**{key: data[key] for key in (
+                "name", "class_level", "title", "category", "body", "authorship_confirmed")}, image=media)
+    except Exception:
+        if media is not None and media.file.name and media.file._committed:
+            media.file.delete(save=False)
+        raise
 
 
 @transaction.atomic

@@ -38,9 +38,11 @@ class FrontendUnitTests(SimpleTestCase):
         self.assertEqual(public.error_404(request, Exception()).status_code, 404)
         self.assertEqual(public.error_500(request).status_code, 500)
 
-    def test_submission_rejects_post_without_writing(self):
-        response = public.submission(RequestFactory().post('/artikel-einreichen', {'name': 'private'}))
-        self.assertEqual(response.status_code, 405)
+    def test_submission_limits_and_honeypot(self):
+        from news.submission_ui import SubmissionUIForm
+        form = SubmissionUIForm()
+        self.assertEqual(form.fields['title'].max_length, 200)
+        self.assertTrue(form.fields['website'].widget.is_hidden)
 
     def test_public_render_cache_and_canonical(self):
         from django.core.paginator import Paginator

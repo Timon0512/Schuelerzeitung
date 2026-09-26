@@ -2,6 +2,12 @@ from django.core.validators import RegexValidator
 from django.db import models
 
 
+class RateLimitWindow(models.Model):
+    key = models.CharField(max_length=64, primary_key=True)
+    expires_at = models.DateTimeField(db_index=True)
+    attempts = models.PositiveIntegerField(default=0)
+
+
 class Reaction(models.Model):
     article = models.ForeignKey("news.Article", on_delete=models.CASCADE, related_name="reactions")
     visitor_token_hash = models.CharField(max_length=64, validators=[RegexValidator(r"^[0-9a-f]{64}$")])

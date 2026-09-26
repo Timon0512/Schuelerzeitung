@@ -9,3 +9,6 @@ staticfiles/
 node_modules/
 .npm-cache/
 .qa/
+deploy/production.env
+var/
+backups/

@@ -47,9 +47,10 @@ def home(request):
     remaining = articles.exclude(pk=lead.pk) if lead else articles
     side = list(remaining[:2])
     latest = remaining.exclude(pk__in=[item.pk for item in side])[:6]
+    now = timezone.now()
     popular = articles.annotate(week_hearts=Count("reactions", filter=Q(
-        reactions__created_at__gte=timezone.now() - timedelta(days=7),
-        reactions__created_at__lte=timezone.now()))).filter(week_hearts__gt=0).order_by(
+        reactions__created_at__gte=now - timedelta(days=7),
+        reactions__created_at__lte=now))).filter(week_hearts__gt=0).order_by(
             "-week_hearts", "-published_at", "-pk")[:5]
     return public_render(request, "news/home.html", {
         "lead": lead, "side_articles": side, "latest": latest, "popular": popular,
@@ -100,9 +101,13 @@ def article_detail(request, slug):
     data = article_context(article)
     data["related"] = public_articles().filter(category_id=article.category_id).exclude(pk=article.pk)[:3]
     data["heart_count"] = article.reactions.count()
+    from reactions.services import visitor_token, token_hash, ensure_cookie
+    token = visitor_token(request)
+    data.update(hearts_enabled=True, heart_action=reverse("heart", args=[article.slug]),
+                heart_state="ready", heart_selected=bool(token and article.reactions.filter(visitor_token_hash=token_hash(token)).exists()))
     if article.hero_image_id:
         data["og_image"] = request.build_absolute_uri(reverse("media", args=[article.hero_image_id]))
-    return public_render(request, "news/article.html", data)
+    return ensure_cookie(request, public_render(request, "news/article.html", data))
 
 
 @require_safe
@@ -140,14 +145,6 @@ def information(request, page):
     return public_render(request, "news/information.html", {
         "title": titles[page], "information_page": page,
         "noindex": page in ("impressum", "datenschutz")})
-
-
-@require_safe
-def submission(request):
-    from .submission_ui import SubmissionUIForm
-    return public_render(request, "news/submission.html", {
-        "title": "Artikel einreichen", "form": SubmissionUIForm(), "noindex": True,
-        "submission_enabled": False})
 
 
 def error_404(request, exception):

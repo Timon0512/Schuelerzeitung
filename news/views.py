@@ -25,7 +25,7 @@ def private_media(request, pk):
     if not request.user.has_perm("news.view_media"):
         raise PermissionDenied
     media = get_object_or_404(Media, pk=pk)
-    if media.submission_set.exists() and not request.user.has_perm("submissions.view_submission"):
+    if (media.submission_origin or media.submission_set.exists()) and not request.user.has_perm("submissions.view_submission"):
         raise PermissionDenied
     return private_headers(FileResponse(media.file.open("rb"), content_type=media.mime_type))
 
@@ -48,7 +48,7 @@ def article_preview(request):
 
 @require_safe
 def site_logo(request):
-    setting = get_object_or_404(SiteSetting.objects.select_related("logo"), pk=1, logo__isnull=False, logo__submission__isnull=True)
+    setting = get_object_or_404(SiteSetting.objects.select_related("logo"), pk=1, logo__isnull=False, logo__submission__isnull=True, logo__submission_origin=False)
     try:
         response = FileResponse(setting.logo.file.open("rb"), content_type=setting.logo.mime_type)
     except FileNotFoundError:

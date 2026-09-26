@@ -144,7 +144,7 @@ class CategoryAdmin(ProtectedRelatedAdmin):
 class SiteSettingAdmin(ProtectedRelatedAdmin):
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "logo":
-            kwargs["queryset"] = Media.objects.filter(submission__isnull=True)
+            kwargs["queryset"] = Media.objects.filter(submission__isnull=True, submission_origin=False)
             kwargs["help_text"] = "Dieses Logo wird öffentlich ausgeliefert. Private Einsendungsbilder sind ausgeschlossen."
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 

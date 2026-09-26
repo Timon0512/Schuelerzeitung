@@ -9,8 +9,8 @@ Die Prompts sind für separate, nacheinander bearbeitete Aufgaben im selben Proj
 | 3 Backend-Grundlage | Paket 2 freigegeben; DB-Verbindung | [03](03-backend.md) | Implementiert; PostgreSQL-Abnahme blockiert, Entwicklungs-/Testverbindung fehlt |
 | 4 Redaktion und Medien | Paket 3 | [04](04-redaktion.md) | Implementiert; lokale Prüfungen bestanden, PostgreSQL- und vollständige Admin-Abnahme mangels DB offen |
 | 5 Öffentliches Frontend | Paket 4; Designfreigabe | [05](05-frontend.md) | Implementiert; Offline-/Browserprüfungen bestanden, PostgreSQL-Abnahme mangels Verbindung offen |
-| 6 Öffentliche Interaktionen | Paket 5 | [06](06-interaktionen.md) | Nicht begonnen |
-| 7 Betrieb und Gesamtabnahme | Paket 6 | [07](07-betrieb.md) | Nicht begonnen |
+| 6 Öffentliche Interaktionen | Paket 5 | [06](06-interaktionen.md) | Implementiert; 25 Offline-Tests und Browserprüfung bestanden, PostgreSQL-Abnahme bis zur Bestätigung des Testziels offen |
+| 7 Betrieb und Gesamtabnahme | Paket 6 | [07](07-betrieb.md) | Implementiert; lokale Betriebsprüfung, PostgreSQL-/Restore-/Schulabnahme noch offen |
 
 ## Gemeinsamer Auftrag für jede Aufgabe
 

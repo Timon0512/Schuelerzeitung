@@ -67,6 +67,7 @@ class MediaQuerySet(models.QuerySet):
 
 
 class Media(models.Model):
+    submission_origin = models.BooleanField(default=False, editable=False)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     file = models.FileField("Datei", upload_to=media_path)
     alt_text = models.CharField("Alternativtext", max_length=300, blank=True)

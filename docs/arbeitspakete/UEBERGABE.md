@@ -1,5 +1,134 @@
 # Übergabe — 26.09.2026
 
+## Paket 7 – Betrieb implementiert, Gesamtabnahme mit externen Blockern
+
+README.md, diese Übergabe (gemeint mit UBERGABE.md), Paketprompt 07, PRODUCT.md und
+beide Konzepte gelesen. Vorhandene uncommittete Paket-6-Änderungen erhalten.
+Keine Serveränderung, Datenbankmigration, öffentliche Inbetriebnahme oder Commit.
+Testdatenbank-Bestätigung erneut angefragt; bis Abschluss nicht eingegangen.
+
+### Ergebnis
+
+- `Dockerfile`, `.dockerignore`, `compose.production.yaml`: Python 3.12.14 und uv
+  0.12.13 mit Registry-Digests, gelockte Installation einschließlich Gunicorn 23,
+  collectstatic beim Build, UID/GID 10001, schreibgeschütztes Root-Dateisystem,
+  temporärer Speicher, persistenter privater Bind-Mount, ausschließlich lokaler Port.
+  Kein DB-Container, keine DB-Portfreigabe, keine Geheimnisse im Buildkontext.
+- `deploy/gunicorn.conf.py`, `production.env.example`, `compose.env`,
+  `nginx.conf.example`: konfigurierbarer Host-PostgreSQL-Zugang, HTTPS-Proxyvorlage
+  mit Body-/Loginlimit, getrennte statische Auslieferung und gesperrte Dateipfade.
+  Öffentliche und private Uploads bleiben ausschließlich über Django-Rechteprüfungen
+  erreichbar. Kein automatischer Proxy- oder Migrationsstart.
+- `config/settings.py`: Medien-/Static-Pfade konfigurierbar, explizites Proxy-Proto-
+  Vertrauen, HSTS-Alter, Produktionssperren gegen Debug, schwachen Schlüssel,
+  Wildcard-Hosts und unsichere CSRF-Origins. `tests/test_deployment_unit.py` prüft
+  diese Grenzen ohne DB. `tests/container_smoke.py` prüft das tatsächlich gebaute Image.
+- `docs/BETRIEB.md`: Start/Updates, DB-Rechte, namentliche Konten, Proxyvertrauen,
+  Schreibstopp als Konsistenzstrategie, gemeinsames Sicherungsverzeichnis mit Kennung,
+  Prüfsummen und COMPLETE-Markierung, pg_dump/pg_restore und Medienarchiv,
+  isolierter Restore-Ablauf sowie Startblocker. Keine Sicherung echter Daten erstellt.
+- `docs/LEHRKRAFT.md`: kurze deutsche Anleitung von Einsendungsprüfung über Entwurf,
+  Bilder und Vorschau bis Veröffentlichung/Rücknahme. README und Paketstatus ergänzt.
+
+### Tatsächlich ausgeführte Prüfungen
+
+```powershell
+$env:UV_CACHE_DIR='.uv-cache'
+uv add 'gunicorn>=23,<24' --no-sync --python 'C:\Users\Timon\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe'
+& '.\.venv-backend\Scripts\python.exe' manage.py check
+& '.\.venv-backend\Scripts\python.exe' -m unittest tests.test_configuration tests.test_editorial_unit tests.test_frontend_unit tests.test_interactions_unit -q
+& '.\.venv-backend\Scripts\python.exe' -m unittest tests.test_deployment_unit -q
+& '.\.venv-backend\Scripts\python.exe' -m tests.frontend_fixtures
+$env:PLAYWRIGHT_MODULE='C:\Users\Timon\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright'
+& 'C:\Program Files\nodejs\node.exe' tests/browser_frontend.cjs
+& 'C:\Program Files\nodejs\node.exe' tests/browser_editor.cjs
+docker build -t kaktus:package7 .
+docker compose --env-file deploy/compose.env -f compose.production.yaml config --no-env-resolution --quiet
+docker run --rm --network none --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges -e DJANGO_ENV=production -e DJANGO_DEBUG=false -e DJANGO_SECRET_KEY=test-only-abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ -e DJANGO_ALLOWED_HOSTS=zeitung.example.invalid -e DJANGO_CSRF_TRUSTED_ORIGINS=https://zeitung.example.invalid -e DJANGO_TRUST_PROXY_PROTO=true -e DJANGO_HSTS_SECONDS=31536000 kaktus:package7 python manage.py check --deploy --fail-level WARNING
+docker run --rm --network none --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges --mount "type=bind,source=$((Get-Location).Path)/tests/container_smoke.py,target=/tmp/container_smoke.py,readonly" -e DJANGO_ENV=production -e DJANGO_DEBUG=false -e DJANGO_SECRET_KEY=test-only-abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ -e DJANGO_ALLOWED_HOSTS=zeitung.example.invalid -e DJANGO_CSRF_TRUSTED_ORIGINS=https://zeitung.example.invalid -e DJANGO_TRUST_PROXY_PROTO=true kaktus:package7 python /tmp/container_smoke.py
+& '.\.venv-backend\Scripts\python.exe' manage.py test news --noinput
+git diff --check
+```
+
+- Systemcheck ohne Probleme, **25 bestehende plus 3 neue datenbankfreie Tests bestanden**.
+- **24 Seitenzustände bei 360/768/1440 px bestanden**, inklusive Navigation ohne JS,
+  Fokus, Bildern/Schriften und Überläufen; keine JS-Fehler/externen Requests.
+  **Editor bei 1280/390 px bestanden**. Chromium benötigte nach EPERM genehmigte
+  Ausführung außerhalb der Sandbox; Screenshots in `.qa/`.
+- **Containerbuild bestanden**, 139 statische Dateien gesammelt; zweiter Build mit
+  fixierten Digests ebenfalls erfolgreich. Compose-Strukturprüfung bestanden ohne
+  Auflösung der noch nicht angelegten Produktions-env-Datei. Beim ersten Compose-
+  Aufruf wurde die Entwickler-.env automatisch interpoliert; Dokumentation verwendet
+  deshalb jetzt ausdrücklich die leere `deploy/compose.env` und rohes Runtime-env_file.
+- Produktionscheck meldet **genau W005/W021**, weil HSTS für Subdomains und Preload
+  bewusst nicht ohne Domainfreigabe aktiviert wird. Daher erwarteter Exitcode 1 bei
+  `--fail-level WARNING`; kein behaupteter warnungsfreier Deploymentcheck.
+- **Gunicorn-Smoke bestanden**, ohne Netzwerk und DB: UID 10001, keine .env im Image,
+  statische Assets vorhanden, Login mit Secure-CSRF-Cookie über vertrauenswürdigen
+  HTTPS-Header, private Medien leiten anonyme Besucher zur Anmeldung. Erster Versuch
+  hatte zu kurze Startwartezeit; nach Anpassung auf 10 Sekunden bestanden.
+- **31 PostgreSQL-Tests gefunden, vor DB-Zugriff gesperrt**, da Freigabe fehlt.
+  Rechte-/Medienregeln mit realen Datensätzen, Konkurrenztests und der gespeicherte
+  vollständige Redaktionsablauf bleiben ungeprüft. Kein SQLite-Ersatz.
+- `git diff --check` ohne Whitespacefehler. Kein Schema geändert.
+
+### Offene Abnahme / nächster Einstieg
+
+1. Entbehrliches PostgreSQL-Testziel ausdrücklich bestätigen und 31 Integrationstests
+   ausführen; anschließend den echten Redaktionsablauf mit fiktiven Daten abnehmen.
+2. Isoliertes Restore-Ziel bereitstellen und Backup/Restore mit gemeinsamem fiktivem
+   Daten-/Medienbestand nach `docs/BETRIEB.md` wirklich durchführen. **Restore ungeprüft.**
+3. Nginx-Vorlage auf dem Zielhost an Domain/Zertifikate anpassen, `nginx -t`, HTTPS,
+   Headerüberschreibung, Loginlimit, Uploadgrenze, Medienrücknahme und DB-Firewall
+   prüfen. Diese reale Proxy-/Serverprüfung wurde nicht durchgeführt.
+4. Schultexte, Aufbewahrungsfristen, Namens-/Bildfreigaben und Lehrkraftabnahme offen.
+   Paket 7 ist implementiert, aber die Gesamtanwendung noch nicht zum Start abgenommen.
+   Kein weiteres Arbeitspaket automatisch begonnen.
+
+---
+
+## Paket 6 – Öffentliche Interaktionen implementiert, PostgreSQL-Abnahme offen
+
+Gelesen: `README.md`, vorhandene `06-interaktionen.md`, diese Übergabe, `PRODUCT.md`, beide Konzepte und die betroffenen Backend-/Frontend-Dateien. Die gesuchte `UBERGABE.md` heißt `docs/arbeitspakete/UEBERGABE.md`. Der freigegebene Designvertrag wurde beibehalten. Anders als in der historischen Übergabe sind inzwischen `.env`, PostgreSQL-Verbindung und ein Git-Repository vorhanden. Geheimnisse wurden nicht ausgegeben oder verändert. `KAKTUS_TEST_DATABASE_CONFIRMED` ist weiterhin nicht `true`; die Bestätigung für die entbehrliche Testdatenbank wurde angefragt und liegt bislang nicht vor. Keine Datenbank angelegt, geleert oder migriert; kein SQLite-Ersatz und kein Datenbankcontainer.
+
+### Ergebnis
+
+- `submissions/views.py`, `services.py`, `news/submission_ui.py`: echte öffentliche GET/POST-Einreichung, ausschließlich aktive Rubriken, 120/40/200/50.000 Zeichen, erforderliche Urheberschaft, Honeypot, optional ein tatsächlich dekodiertes Bild. Neue WebP-Dateien ohne Metadaten bleiben privat. Fehler erhalten Texte und Auswahl; Dateien müssen erneut ausgewählt werden. Erfolgreiche Speicherung führt per Redirect zur einmaligen sitzungsgebundenen Empfangsbestätigung. Keine personenbezogenen Inhalte in eigenen Logs; POST-Daten und Speicherfunktion für Django-Fehlerberichte geschützt.
+- `config/interaction_limits.py`, `reactions/limits.py`, `models.py`: Request-Grenzen vor Multipart-/CSRF-Verarbeitung (11 MB/4 KB), öffentliche Feld-/Dateianzahlgrenzen ohne Einschränkung der Adminformulare, Datenbank-Rate-Limits standardmäßig 5 Einreichungsversuche/Stunde und 60 Herz-POSTs/Minute. Auch fehlerhafte/CSRF-abgewiesene POSTs zählen. Atomare PostgreSQL-Upserts vermeiden Konkurrenzfehler auch beim Fensterwechsel. Fensterabhängige HMAC-IP-Schlüssel, keine Klartext-IP in der Tabelle, abgelaufene Fenster werden bei weiteren Interaktionen entfernt. Proxy-Ketten werden nur hinter explizit konfigurierten vertrauenswürdigen Netzen ausgewertet. 429 enthält `Retry-After`.
+- `reactions/services.py`, `views.py`, `news/public.py`, `config/urls.py`: öffentlicher POST-Herzweg mit CSRF und zufälligem langlebigem HttpOnly-/SameSite-Cookie (Secure in Produktion). Gültiges zurückgesendetes Cookie ist Voraussetzung; nur SHA-256-Hash wird gespeichert. Ein Artikellock serialisiert Setzen/Entfernen und der Unique-Constraint bleibt aktiv. Zwei gleichzeitige Klicks ergeben wieder den Ausgangszustand. GET-Ansicht liest tatsächlichen Zustand und Zähler. Rangliste verwendet einen gemeinsamen Zeitstempel für das Sieben-Tage-Fenster, maximal fünf öffentliche Beiträge, ohne Nullwerte und mit stabiler Sortierung.
+- `purge_interactions`: standardmäßig reine Vorschau mit Datensatz-/Bildanzahlen. `--execute` benötigt explizit bestätigte positive Fristen; Frist 0 deaktiviert die jeweilige Inhaltslöschung. Keine automatische Planung. Dateien werden erst nach Commit und nur ohne Artikel-/Einsendungs-/Brandingverweise entfernt. Übernommene Artikel und deren Bilder bleiben erhalten.
+- `Media.submission_origin`, Medienauswahl und Logo-/Privatrouten: Herkunft bleibt nach Löschung einer Einsendung erhalten. Dadurch wird ein ehemaliges Einsendungsbild nicht automatisch allgemeines Redaktionsbild oder öffentliches Logo. Migration `news.0003_media_submission_origin` markiert auch bestehende Einsendungsbilder; `reactions.0003_ratelimitwindow` ergänzt Rate-Limit-Tabelle.
+- `README.md`, `.env.example`, Paketübersicht aktualisiert. Alle Limits/Fristen dokumentiert. Bestehende Rechtstext-/Betriebsblocker bleiben offen. Paket 7 nicht begonnen.
+
+### Tatsächlich ausgeführte Prüfungen
+
+```powershell
+& '.\.venv-backend\Scripts\python.exe' manage.py check
+& '.\.venv-backend\Scripts\python.exe' manage.py makemigrations news reactions --noinput
+& '.\.venv-backend\Scripts\python.exe' manage.py makemigrations --check --dry-run
+& '.\.venv-backend\Scripts\python.exe' -m unittest tests.test_configuration tests.test_editorial_unit tests.test_frontend_unit tests.test_interactions_unit -q
+& '.\.venv-backend\Scripts\python.exe' -m tests.frontend_fixtures
+$env:PLAYWRIGHT_MODULE='C:\Users\Timon\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\node_modules\playwright'
+& 'C:\Program Files\nodejs\node.exe' tests/browser_frontend.cjs
+& '.\.venv-backend\Scripts\python.exe' manage.py test news --noinput
+git diff --check
+```
+
+- Django-Systemcheck: **0 Probleme**. Zwei Migrationen erzeugt; abschließend **No changes detected**. Die Migrationshistorienprüfung scheiterte zunächst an Namensauflösung in der Sandbox, funktionierte bei genehmigter rein lesender Wiederholung außerhalb der Sandbox. Keine Migration auf bestehende Datenbank angewendet.
+- **25 datenbankfreie Tests bestanden**: die bisherigen 18 plus sieben neue Interaktionsprüfungen (IP-/Proxy-Vertrauensgrenze, rotierende Schlüssel, sichere Cookie-Eigenschaften, Body-/Feldgrenzen vor Weiterverarbeitung, Multipart-Wiederlesbarkeit, Honeypot/Feld-/Dateivalidierung, Löschsperre). Erwartete Warnungen betreffen ausschließlich das isolierte Überschreiben von Datenbankeinstellungen in Konfigurationstests.
+- **24 echte Template-Fixtures bei 360, 768 und 1440 Pixeln bestanden**, einschließlich Formularzuständen, Schriften/Bildern, Überläufen, Fokus/Menü und Navigation ohne JavaScript. Keine JS-Fehler oder externen Requests. Chromium war zunächst durch `spawn EPERM` blockiert; genehmigte Wiederholung außerhalb der Sandbox bestanden. Diese Prüfung bestätigt Layout/Bedienung, keine gespeicherten Interaktionen.
+- PostgreSQL: **31 Tests gefunden, vor Datenbankzugriff gesperrt**. Zehn neue Tests in `news/test_interactions.py` decken private Einreichung/Empfang, ungültige Angaben/Dateien, CSRF/Rate-Limits, Cookie/Toggle/Sichtbarkeit, Sieben-Tage-Grenze/Ties/Top-5, vollständigen redaktionellen Ablauf, Löschvorschau/Bilderhalt sowie parallele Klicks und Fensterwechsel ab. Diese Tests wurden mangels Bestätigung **nicht ausgeführt**; Konkurrenzverhalten und vollständige End-to-End-Abnahme werden nicht als nachgewiesen ausgegeben.
+- `git diff --check`: keine Whitespace-Fehler; lediglich übliche Git-Hinweise zur LF/CRLF-Konvertierung. Keine fremden Änderungen überschrieben, kein Commit erstellt.
+
+### Offene Abnahme / Weiterarbeit
+
+1. Betreiber bestätigt, dass `PGTESTDATABASE` ausschließlich entbehrliche Testdaten enthält. Dann `KAKTUS_TEST_DATABASE_CONFIRMED=true` für den Testprozess setzen und alle 31 PostgreSQL-Tests ausführen. `--keepdb` nur bei ausdrücklich vorab bereitgestelltem leerem Testziel; niemals die Entwicklungs-/Produktivdatenbank als Testziel verwenden. Fehler vor Abnahme korrigieren.
+2. Danach die zwei Migrationen auf der freigegebenen Entwicklungsdatenbank anwenden und den echten Formular-/Redaktionsablauf im Browser prüfen. Die Oberfläche ist im Code aktiviert und benötigt das neue Schema.
+3. Fristen, Rechtstexte und reale Proxy-Konfiguration bleiben vor Inbetriebnahme zu bestätigen. Feste Rate-Fenster erlauben zwei Kontingente direkt an der Grenze; sie sind keine gleitenden Fenster. Eine Body-Grenze am Reverse-Proxy ist zusätzlich erforderlich, da Webserver/ASGI schon vor Django puffern können. Keine Behauptung eines produktionsfertigen Deployments.
+4. Paket 7 kann anschließend Betrieb/Gesamtabnahme auf diesen Schreibwegen und `purge_interactions` aufbauen; kein automatischer Folgeauftrag.
+
+---
+
 ## Paket 5 – Öffentliches Frontend implementiert, PostgreSQL-Abnahme offen
 
 Vor Umsetzung gelesen: `README.md`, diese Übergabe, vorhandener Paketprompt `05-frontend.md`, `PRODUCT.md`, `DESIGN.md`, Konzepte und freigegebene Option-A-Mockups. Die gesuchte `UBERGABE.md` heißt im Projekt `docs/arbeitspakete/UEBERGABE.md`. Designfreigabe unverändert gültig; keine neue Auswahl nötig. Weiterhin keine `.env` oder bestätigte PostgreSQL-Entwicklungs-/Testverbindung vorgefunden. Keine Datenbank verändert, kein SQLite-Fallback, keine Datenbankcontainer. Paket 6 wurde nicht begonnen.
