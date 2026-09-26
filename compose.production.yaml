@@ -4,7 +4,9 @@ services:
     image: kaktus:${KAKTUS_IMAGE_TAG:-local}
     build: .
     env_file:
-      - path: ${KAKTUS_ENV_FILE:-./deploy/production.env}
+      # Use the project-root .env by default. Set KAKTUS_ENV_FILE to use a
+      # separate production environment file on servers that need one.
+      - path: ${KAKTUS_ENV_FILE:-./.env}
         format: raw
     environment:
       DJANGO_ENV: production
