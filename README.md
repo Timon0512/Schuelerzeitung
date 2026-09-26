@@ -45,6 +45,26 @@ Auf anderen Rechnern beim Sync den Pfad einer funktionierenden Python-Installati
 5. In der Artikelliste die Aktionen **Veröffentlichen**, **Zurückziehen (als Entwurf)** oder **Als Aufmacher setzen** verwenden. Diese benötigen das Freigaberecht. Redaktion allein darf Entwürfe bearbeiten; veröffentlichte Artikel sowie deren gemeinsam verwendete Bilder/Autorendarstellungen sind für sie schreibgeschützt. Statusfelder lassen sich auch durch direkte Formular-POSTs nicht ändern.
 6. Einsendungen in Prüfung nehmen, ablehnen oder **Als Entwurf übernehmen**. Wiederholte Übernahme liefert denselben verknüpften Entwurf. Name und Klasse bleiben intern; es wird keine Autorendarstellung automatisch erzeugt.
 
+## Bildfokus und WebP-Varianten
+
+Beim Titelbild eines Artikels lassen sich **Bildfokus horizontal/vertikal (%)** einstellen. Die interaktive Vorschau unterstützt Antippen, Ziehen und Pfeiltasten (Umschalt: zehn Prozentpunkte) und zeigt die bestehenden Bildformate. Der Fokus gehört zum Artikel; derselbe Upload kann in anderen Artikeln anders positioniert werden. Ein neues Titelbild startet zentriert. Ohne JavaScript zuerst das neue Titelbild speichern, anschließend die Prozentfelder einstellen. Die ungespeicherte Artikelvorschau berücksichtigt den Fokus.
+
+Neue Uploads aus Redaktion und Einsendungsformular erhalten automatisch WebP-Varianten mit maximal **640 und 1920 Pixel Breite**, Qualität **82**, ohne Hochskalierung. Bei identischen Ausgabegrößen wird nur eine Variantendatei gespeichert. Die bereinigte Ausgangsdatei bleibt erhalten. Öffentliche Seiten wählen über `srcset`/`sizes` die passende Datei; Textbilder werden nicht beschnitten. Varianten erben den Zugriffsschutz des Ausgangsbilds und werden ausschließlich über die geprüften Medienrouten ausgeliefert. Es gibt keine Umrechnung beim Seitenaufruf.
+
+Vor Einführung Datenbank und privaten Medienspeicher sichern. Danach im jeweiligen Zielsystem:
+
+```powershell
+& '.\.venv-backend\Scripts\python.exe' manage.py migrate
+# Vorschau: liest und berechnet, speichert aber keine Dateien oder Datensätze.
+& '.\.venv-backend\Scripts\python.exe' manage.py optimize_images
+# Nach Prüfung der Vorschau vorhandene Bilder nachbearbeiten:
+& '.\.venv-backend\Scripts\python.exe' manage.py optimize_images --execute
+```
+
+Migration `news.0004` ergänzt nur die Datenstruktur. Der Bestandslauf lässt Ausgangsdateien und Medien-IDs unverändert, überspringt bereits vollständig verarbeitete Bilder und kann nach Fehlern wiederholt werden. Seine Ausgabe nennt die Gesamtdateigrößen beider Webvarianten und die Zahl fehlgeschlagener Bilder. Ohne Varianten wird weiterhin die Ausgangsdatei angezeigt. Beim Dateiaustausch entstehen neue Varianten; alte Dateien werden erst nach erfolgreichem Commit entfernt. Auch die Medienlöschung berücksichtigt alle Varianten.
+
+Zusätzliche Prüfungen: `python -m unittest tests.test_image_variants_unit`, `python manage.py test news.test_image_variants` (nur freigegebene PostgreSQL-Testdatenbank) und nach `python -m tests.frontend_fixtures` die Browserprüfung `node tests/browser_image_focus.cjs`. Für lokale Tests `DJANGO_ENV=development` und `DJANGO_DEBUG=true` setzen. Die Browserprüfung verwendet bei Bedarf `PLAYWRIGHT_MODULE` wie die vorhandenen Tests.
+
 ## Editor bauen
 
 Die fertigen statischen Dateien samt Drittlizenzen liegen unter `news/static/news/`; der Betrieb benötigt weder Node noch einen Frontend-Server. Zum Ändern des Editors:

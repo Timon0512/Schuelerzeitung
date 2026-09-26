@@ -24,6 +24,11 @@ def clean_body(value, images=(), *, private=False, render=False, captions=None):
                 route = "/redaktion/medien/" if private else "/medien/"
                 tag = f'<img data-media-id="{image.pk}" src="{route}{image.pk}" alt="{escape(image.alt_text, quote=True)}">'
                 if render:
+                    from .image_variants import image_attributes
+                    attrs = image_attributes(image, private=private)
+                    tag = f'<img data-media-id="{image.pk}" src="{escape(attrs["src"], quote=True)}" alt="{escape(image.alt_text, quote=True)}">'
+                    if attrs["srcset"]:
+                        tag = tag[:-1] + f' srcset="{escape(attrs["srcset"], quote=True)}" sizes="auto, (min-width: 808px) 760px, (min-width: 480px) calc(100vw - 48px), calc(100vw - 32px)">'
                     # Inline-safe wrapper: editor images may be inside a paragraph.
                     dimensions = f' width="{image.width}" height="{image.height}" loading="lazy"'
                     tag = tag[:-1] + dimensions + ">"

@@ -30,7 +30,7 @@ class FrontendUnitTests(SimpleTestCase):
         self.assertIn(image.alt_text, rendered)
         self.assertIn('&lt;script&gt;', rendered)
         self.assertNotIn('<figure>', rendered)
-        self.assertIn('width="1200"', rendered)
+        self.assertIn(f'width="{image.width}"', rendered)
         self.assertNotIn('stale', rendered)
 
     def test_error_pages_need_no_database(self):

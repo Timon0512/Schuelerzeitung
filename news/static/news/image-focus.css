@@ -1,0 +1,13 @@
+.field-hero_focus_image { display: none; }
+.image-focus { padding: 16px; color: var(--body-fg, #222); background: var(--body-bg, #fff); }
+.image-focus p { max-width: 70ch; }
+.image-focus [hidden] { display: none; }
+.focus-source { position: relative; max-width: 560px; margin: 20px 12px; touch-action: none; cursor: crosshair; }
+.focus-source > img { display: block; width: 100%; height: auto; }
+.image-focus .focus-point { position: absolute; width: 28px; height: 28px; padding: 0; border: 3px solid white; border-radius: 50%; background: #B84318; box-shadow: 0 2px 4px rgb(36 35 33 / 60%); transform: translate(-50%, -50%); cursor: move; }
+.image-focus button:focus-visible { outline: 3px solid var(--body-fg, #222); outline-offset: 3px; }
+.focus-previews { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 20px; max-width: 960px; margin-top: 24px; }
+.focus-previews figure { margin: 0; min-width: 0; }
+.focus-previews img { display: block; width: 100%; height: auto; object-fit: cover; }
+.focus-previews figcaption { margin-top: 8px; }
+.focus-status { color: var(--body-fg, #222); }

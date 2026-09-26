@@ -12,18 +12,25 @@ class EditorWidget(forms.Textarea):
 
 
 class ArticleForm(forms.ModelForm):
+    hero_focus_image = forms.CharField(required=False, widget=forms.HiddenInput)
     text_images = forms.ModelMultipleChoiceField(label="Textbilder", queryset=Media.objects.none(), required=False,
         help_text="Bilder auswählen und mit ‚Bild einfügen‘ im Text platzieren. Neue Bilder zuerst unter Bilder hochladen.")
 
     class Meta:
         model = Article
-        fields = ["title", "slug", "excerpt", "category", "author", "hero_image", "text_images", "body"]
+        fields = ["title", "slug", "excerpt", "category", "author", "hero_image", "hero_focus_x", "hero_focus_y", "hero_focus_image", "text_images", "body"]
         widgets = {"body": EditorWidget(attrs={"class": "kaktus-editor"})}
         labels = {"slug": "Artikeladresse", "author": "Autorendarstellung", "hero_image": "Titelbild"}
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
+        self.initial["hero_focus_image"] = str(self.instance.hero_image_id or "")
+        for name in ("hero_focus_x", "hero_focus_y"):
+            self.fields[name].required = False
+            self.fields[name].widget.attrs.update({"min": 0, "max": 100, "step": 1})
+        self.fields["hero_focus_x"].help_text = "0 = links, 100 = rechts. Ohne JavaScript wird ein neues Titelbild zunächst zentriert; danach speichern und den Fokus einstellen."
+        self.fields["hero_focus_y"].help_text = "0 = oben, 100 = unten."
         allowed = selectable_media(user, self.instance)
         for name in ("hero_image", "text_images"):
             self.fields[name].queryset = allowed
@@ -39,6 +46,10 @@ class ArticleForm(forms.ModelForm):
 
     def clean(self):
         data = super().clean()
+        selected = str(data["hero_image"].pk) if data.get("hero_image") else ""
+        for name in ("hero_focus_x", "hero_focus_y"):
+            if name not in self.errors and (data.get(name) is None or selected != data.get("hero_focus_image", "")):
+                data[name] = 50
         images = list(data.get("text_images", ()))
         data["body"] = clean_body(data.get("body", ""), images)
         if self.instance.status == "published":
@@ -48,6 +59,10 @@ class ArticleForm(forms.ModelForm):
             if any(not image.alt_text.strip() for image in all_images):
                 self.add_error("text_images", "Alle Bilder benötigen einen Alternativtext.")
         return data
+
+    class Media:
+        js = ["news/image-focus.js"]
+        css = {"all": ["news/image-focus.css"]}
 
 
 class MediaForm(forms.ModelForm):

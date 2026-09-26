@@ -40,6 +40,4 @@ class Command(BaseCommand):
             # Keep every image referenced by an article (including drafts), another submission or branding.
             for media in Media.objects.filter(pk__in=media_ids, submission__isnull=True,
                     hero_articles__isnull=True, placements__isnull=True, sitesetting__isnull=True).distinct():
-                storage, name = media.file.storage, media.file.name
                 media.delete()
-                transaction.on_commit(lambda storage=storage, name=name: storage.delete(name))

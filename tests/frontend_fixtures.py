@@ -21,7 +21,7 @@ def fixtures():
         ("Schule", "schule"), ("Meinung", "meinung"), ("Kultur", "kultur"), ("Sport", "sport"), ("Pausenecke", "pausenecke")])]
     author = Author(pk=1, display_name="Beispielredaktion", slug="beispiel", is_public=True,
                     bio="Fiktive Autorendarstellung für die Layoutprüfung.")
-    media = Media(alt_text="Beschriftete Testfläche, kein Schulfoto", caption="Testgrafik für die Layoutprüfung – kein Nachrichtenfoto.", width=1200, height=600)
+    media = Media(alt_text="Beschriftete Testfläche, kein Schulfoto", caption="Testgrafik für die Layoutprüfung – kein Nachrichtenfoto.", width=2400, height=1200, small_file="fixture-small.webp", small_width=640, small_height=320, large_file="fixture-large.webp", large_width=1920, large_height=960)
     titles = ["Eine Woche voller neuer Ideen", "Mehr Raum für unsere Perspektiven", "Was wir gerade lesen", "Gemeinsam etwas bewegen", "Ein Blick hinter die Kulissen", "Geschichten aus dem Schulalltag"]
     articles = [Article(pk=i+1, title=title, slug=f"beispiel-{i}", category=categories[i % 4], author=author,
         hero_image=media, status="published", published_at=datetime(2026,9,25-i,tzinfo=timezone.utc),

@@ -1,5 +1,7 @@
 """Integration coverage; only run via the guarded PostgreSQL test runner."""
 from datetime import timedelta
+from io import BytesIO
+from PIL import Image
 from tempfile import TemporaryDirectory
 from django.test import TestCase, override_settings
 from django.utils import timezone
@@ -84,7 +86,9 @@ class PublicPageTests(TestCase):
 
     def test_rendered_media_captions_and_logo_boundary(self):
         with TemporaryDirectory() as directory, override_settings(MEDIA_ROOT=directory):
-            media = Media.objects.create(file=ContentFile(b'test', name='logo.webp'), alt_text='Aktueller Alttext',
+            pixels = BytesIO()
+            Image.new('RGB', (12, 8), 'red').save(pixels, 'WEBP')
+            media = Media.objects.create(file=ContentFile(pixels.getvalue(), name='logo.webp'), alt_text='Aktueller Alttext',
                 caption='Neue Bildunterschrift', mime_type='image/webp', width=10, height=10, size=4)
             self.visible._allowed_images = [media]
             self.visible.body = f'<p><img data-media-id="{media.pk}"></p>'

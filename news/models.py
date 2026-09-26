@@ -3,7 +3,7 @@ from pathlib import Path
 from .content import clean_body
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, MaxValueValidator
 from django.db import models, transaction, connection
 from django.db.models import Q
 from django.utils import timezone
@@ -70,6 +70,14 @@ class Media(models.Model):
     submission_origin = models.BooleanField(default=False, editable=False)
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     file = models.FileField("Datei", upload_to=media_path)
+    small_file = models.FileField(upload_to=media_path, blank=True, editable=False)
+    small_width = models.PositiveIntegerField(default=0, editable=False)
+    small_height = models.PositiveIntegerField(default=0, editable=False)
+    small_size = models.PositiveIntegerField(default=0, editable=False)
+    large_file = models.FileField(upload_to=media_path, blank=True, editable=False)
+    large_width = models.PositiveIntegerField(default=0, editable=False)
+    large_height = models.PositiveIntegerField(default=0, editable=False)
+    large_size = models.PositiveIntegerField(default=0, editable=False)
     alt_text = models.CharField("Alternativtext", max_length=300, blank=True)
     caption = models.CharField("Bildunterschrift", max_length=500, blank=True)
     mime_type = models.CharField("Dateityp", max_length=30, choices=[(x, x) for x in ("image/jpeg", "image/png", "image/webp")])
@@ -79,6 +87,12 @@ class Media(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
     objects = MediaQuerySet.as_manager()
+
+    def save(self, *args, **kwargs):
+        if not self.file._committed and (kwargs.get("update_fields") is None or "file" in kwargs["update_fields"]):
+            from .image_variants import save_upload
+            return save_upload(self, args, kwargs)
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return self.alt_text or "Bild ohne Alternativtext"
@@ -115,6 +129,8 @@ class Article(models.Model):
     category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name="Rubrik")
     author = models.ForeignKey(Author, null=True, blank=True, on_delete=models.PROTECT, related_name="articles")
     hero_image = models.ForeignKey(Media, null=True, blank=True, on_delete=models.PROTECT, related_name="hero_articles")
+    hero_focus_x = models.PositiveSmallIntegerField("Bildfokus horizontal (%)", default=50, validators=[MaxValueValidator(100)])
+    hero_focus_y = models.PositiveSmallIntegerField("Bildfokus vertikal (%)", default=50, validators=[MaxValueValidator(100)])
     status = models.CharField("Status", max_length=12, choices=Status, default=Status.DRAFT)
     published_at = models.DateTimeField("Veröffentlichungsdatum", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -131,6 +147,7 @@ class Article(models.Model):
         permissions = [("can_publish_article", "Darf Artikel veröffentlichen und Aufmacher wählen")]
         indexes = [models.Index(fields=["status", "-published_at"])]
         constraints = [
+            models.CheckConstraint(condition=Q(hero_focus_x__lte=100, hero_focus_y__lte=100), name="article_focus_bounds"),
             models.CheckConstraint(condition=Q(status__in=["draft", "published", "archived"]), name="article_valid_status"),
             models.CheckConstraint(condition=~Q(status="published") | Q(published_at__isnull=False), name="published_has_date"),
             models.CheckConstraint(condition=Q(featured=False) | Q(status="published"), name="featured_is_published"),

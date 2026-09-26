@@ -21,13 +21,13 @@ def private_headers(response):
 
 @staff_member_required
 @require_safe
-def private_media(request, pk):
+def private_media(request, pk, variant=None):
     if not request.user.has_perm("news.view_media"):
         raise PermissionDenied
     media = get_object_or_404(Media, pk=pk)
     if (media.submission_origin or media.submission_set.exists()) and not request.user.has_perm("submissions.view_submission"):
         raise PermissionDenied
-    return private_headers(FileResponse(media.file.open("rb"), content_type=media.mime_type))
+    return private_headers(image_response(media, variant))
 
 
 @staff_member_required
@@ -59,9 +59,21 @@ def site_logo(request):
 
 
 @require_safe
-def media_file(request, pk):
+def media_file(request, pk, variant=None):
     media = get_object_or_404(Media.objects.public(), pk=pk)
-    response = FileResponse(media.file.open("rb"), content_type=media.mime_type)
+    response = image_response(media, variant)
     response["Cache-Control"] = "private, no-store"
     response["X-Content-Type-Options"] = "nosniff"
     return response
+
+
+def image_response(media, variant=None):
+    if variant not in (None, "small", "large"):
+        raise Http404
+    file = getattr(media, f"{variant}_file") if variant else media.file
+    content_type = "image/webp" if variant and file else media.mime_type
+    file = file or media.file
+    try:
+        return FileResponse(file.open("rb"), content_type=content_type)
+    except FileNotFoundError:
+        raise Http404

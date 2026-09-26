@@ -29,7 +29,8 @@ def receive_submission(form):
                 "name", "class_level", "title", "category", "body", "authorship_confirmed")}, image=media)
     except Exception:
         if media is not None and media.file.name and media.file._committed:
-            media.file.delete(save=False)
+            from news.image_variants import delete_files, stored_files
+            delete_files(stored_files(media))
         raise
 
 
