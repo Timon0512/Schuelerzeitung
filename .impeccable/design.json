@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-25T19:24:02.291225+00:00",
+  "title": "Design System: KAKTUS",
+  "extensions": {
+    "shadows": [],
+    "motion": [
+      {
+        "name": "state-change",
+        "value": "150ms ease-out",
+        "purpose": "Nur Zustandswechsel; reduced-motion respektieren."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "small",
+        "value": "480px"
+      },
+      {
+        "name": "columns",
+        "value": "768px"
+      },
+      {
+        "name": "desktop",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primärbutton",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Tokenbasierte Vorschau, noch keine implementierte Anwendungskomponente.",
+      "html": "<button class=\"ds-primary\">Artikel einreichen</button>",
+      "css": ".ds-primary { background: #B84318; color: #FFFFFF; border: 0; border-radius: 4px; min-height: 44px; padding: 12px 24px; font: 600 16px/1.5 \"Source Sans 3\", Arial, sans-serif; } .ds-primary:hover, .ds-primary:active { background: #91320F; } .ds-primary:focus-visible { outline: 3px solid #174C82; outline-offset: 3px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Klassische Zeitung für die Schulgemeinschaft",
+    "overview": "Freigegebener Designvertrag vor Implementierung. Token-Primitiven stehen ausschließlich im Frontmatter von DESIGN.md.",
+    "keyCharacteristics": [
+      "Serifenschrift",
+      "Warme helle Flächen",
+      "Feine Linien",
+      "Sparsame orange-rote Akzente"
+    ],
+    "rules": [],
+    "dos": [
+      "Die freigegebene Hierarchie und Identität auf weitere Seiten übertragen."
+    ],
+    "donts": [
+      "Keine erneute Designauswahl oder Freigaberunde ohne wesentliche Änderungen beginnen."
+    ]
+  }
+}

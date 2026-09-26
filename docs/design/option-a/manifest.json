@@ -1,0 +1,48 @@
+{
+  "tool": "image_gen (built-in)",
+  "direction": "A",
+  "approval": "direction and eight detailed mockups approved",
+  "images": [
+    {
+      "key": "01-startseite-desktop",
+      "source": "C:\\Users\\Timon\\.codex\\generated_images\\01a0d9d7-7c55-7880-a739-83cd22c11bac\\exec-4a55b062-a073-451a-84ce-1ebd9bea81f1.png",
+      "file": "docs/design/option-a/01-startseite-desktop.png"
+    },
+    {
+      "key": "02-startseite-mobil",
+      "source": "C:\\Users\\Timon\\.codex\\generated_images\\01a0d9d7-7c55-7880-a739-83cd22c11bac\\exec-c64226c2-217a-467c-9293-138b494e0185.png",
+      "file": "docs/design/option-a/02-startseite-mobil.png"
+    },
+    {
+      "key": "03-artikel-desktop",
+      "source": "C:\\Users\\Timon\\.codex\\generated_images\\01a0d9d7-7c55-7880-a739-83cd22c11bac\\exec-cbf83366-e6e3-4b98-be03-2765a4c96692.png",
+      "file": "docs/design/option-a/03-artikel-desktop.png"
+    },
+    {
+      "key": "04-artikel-mobil",
+      "source": "C:\\Users\\Timon\\.codex\\generated_images\\01a0d9d7-7c55-7880-a739-83cd22c11bac\\exec-5d1e58ad-0d07-49b5-9aa2-2b0491babd01.png",
+      "file": "docs/design/option-a/04-artikel-mobil.png"
+    },
+    {
+      "key": "05-einreichen-desktop",
+      "source": "C:\\Users\\Timon\\.codex\\generated_images\\01a0d9d7-7c55-7880-a739-83cd22c11bac\\exec-4c3ea408-e9e0-4b98-96c1-dc7bb1845f47.png",
+      "file": "docs/design/option-a/05-einreichen-desktop.png"
+    },
+    {
+      "key": "06-einreichen-mobil",
+      "source": "C:\\Users\\Timon\\.codex\\generated_images\\01a0d9d7-7c55-7880-a739-83cd22c11bac\\exec-eb33972b-77d4-4cd9-be72-c8f6d0b2fa7f.png",
+      "file": "docs/design/option-a/06-einreichen-mobil.png"
+    },
+    {
+      "key": "07-redaktion-desktop",
+      "source": "C:\\Users\\Timon\\.codex\\generated_images\\01a0d9d7-7c55-7880-a739-83cd22c11bac\\exec-dddcde3f-de12-4b21-85fc-1177d5ec216b.png",
+      "file": "docs/design/option-a/07-redaktion-desktop.png"
+    },
+    {
+      "key": "08-artikelbearbeitung-desktop",
+      "source": "C:\\Users\\Timon\\.codex\\generated_images\\01a0d9d7-7c55-7880-a739-83cd22c11bac\\exec-02c35a3a-c004-47ce-8ca2-7f56ceed5d63.png",
+      "file": "docs/design/option-a/08-artikelbearbeitung-desktop.png"
+    }
+  ],
+  "approvalQuote": "Ja das sieht gut aus."
+}

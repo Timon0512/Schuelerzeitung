@@ -1,0 +1,18 @@
+.editor-wrapper { max-width: 900px; width: 100%; border: 1px solid #D7D1C9; border-radius: 4px; background: #fff; color: #242321; }
+.editor-toolbar { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; border-bottom: 1px solid #D7D1C9; background: #FAF8F4; }
+.editor-toolbar button, .editor-toolbar select, .submit-row button { min-height: 44px; padding: 8px 12px; border: 1px solid #D7D1C9; border-radius: 4px; background: #fff; color: #242321; cursor: pointer; font: inherit; }
+.editor-toolbar button:hover { background: #FBE7DA; }
+.editor-toolbar button[aria-pressed="true"] { background: #B84318; color: #fff; }
+.editor-wrapper :focus-visible, .submit-row button:focus-visible { outline: 3px solid #174C82; outline-offset: 2px; }
+.tiptap { min-height: 350px; padding: 24px; font: 18px/1.65 Georgia, serif; overflow-wrap: anywhere; caret-color: #B84318; }
+.tiptap p { font: inherit; }
+.tiptap ul, .tiptap ol { padding-left: 28px; }
+.tiptap img, .preview img { display: block; max-width: 100%; height: auto; }
+.tiptap ::selection, .preview ::selection { background: #FBE7DA; color: #242321; }
+.preview { margin: 0; background: #FAF8F4; color: #242321; font: 20px/1.65 Georgia, serif; }
+.preview main { max-width: 760px; margin: 40px auto; padding: 0 24px; overflow-wrap: anywhere; }
+.preview h1 { font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.15; }
+.preview-notice, .preview figcaption { font: 16px/1.5 Arial, sans-serif; color: #5E5953; }
+.preview figure { margin: 24px 0; }
+.preview a { color: #B84318; text-underline-offset: 3px; }
+@media (max-width: 767px) { .tiptap { padding: 16px; } .preview main { padding: 0 16px; } }

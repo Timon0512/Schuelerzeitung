@@ -1,0 +1,7 @@
+{
+  "name": "kaktus-editor",
+  "private": true,
+  "scripts": {"build": "esbuild frontend/editor.js --bundle --minify --outfile=news/static/news/editor.js --legal-comments=linked && node frontend/licenses.cjs"},
+  "dependencies": {"@tiptap/core": "^3.0.0", "@tiptap/pm": "^3.0.0", "@tiptap/starter-kit": "^3.0.0", "@tiptap/extension-image": "^3.0.0"},
+  "devDependencies": {"esbuild": "^0.25.0"}
+}

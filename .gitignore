@@ -1,0 +1,11 @@
+.env
+.venv/
+.venv-backend/
+.uv-cache/
+__pycache__/
+*.py[cod]
+media/
+staticfiles/
+node_modules/
+.npm-cache/
+.qa/

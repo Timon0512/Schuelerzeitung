@@ -1,0 +1,28 @@
+:root, html[data-theme="light"], html[data-theme="dark"] {
+  --primary: #B84318; --secondary: #91320F; --accent: #fff;
+  --primary-fg: #fff; --body-fg: #242321; --body-bg: #FAF8F4;
+  --body-quiet-color: #5E5953; --body-medium-color: #5E5953;
+  --body-loud-color: #242321; --header-color: #fff;
+  --header-branding-color: #fff; --header-bg: #B84318; --header-link-color: #fff;
+  --breadcrumbs-fg: #fff; --breadcrumbs-link-fg: #fff; --breadcrumbs-bg: #91320F;
+  --link-fg: #B84318; --link-hover-color: #91320F; --link-selected-fg: #91320F;
+  --hairline-color: #D7D1C9; --border-color: #D7D1C9;
+  --darkened-bg: #FAF8F4; --selected-bg: #FBE7DA; --selected-row: #FBE7DA;
+  --button-fg: #fff; --button-bg: #B84318; --button-hover-bg: #91320F;
+  --default-button-bg: #91320F; --default-button-hover-bg: #B84318;
+  --close-button-bg: #5E5953; --close-button-hover-bg: #242321;
+  --error-fg: #A12622; color-scheme: light;
+}
+@font-face { font-family: 'Source Sans 3'; src: url('fonts/SourceSans3.ttf') format('truetype'); font-weight: 200 900; font-display: swap; }
+body { font-family: 'Source Sans 3', Arial, sans-serif; font-size: 16px; caret-color: #B84318; }
+::selection { background: #FBE7DA; color: #242321; }
+a { text-underline-offset: 3px; }
+:focus-visible { outline: 3px solid #174C82; outline-offset: 2px; }
+#nav-sidebar { flex-basis: 220px; }
+input[type="text"], input[type="url"], input[type="password"], input[type="submit"], select, .button, button { min-height: 44px; box-sizing: border-box; }
+.help, .help p, form .aligned p.help, .form-row, .form-row label { font-size: 14px; }
+.theme-toggle { display: none; }
+.form-row .editor-wrapper { box-sizing: border-box; min-width: 0; }
+.submit-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.submit-row button { font: inherit; }
+@media (max-width: 767px) { .form-row .editor-wrapper { width: 100%; } }

@@ -1,0 +1,8 @@
+{% load i18n admin_urls %}
+<div class="submit-row">
+{% if show_save %}<input type="submit" value="{% if original.status == 'published' %}Änderungen speichern{% else %}Entwurf speichern{% endif %}" class="default" name="_save">{% endif %}
+{% if show_save_and_continue %}<input type="submit" value="Speichern und weiterbearbeiten" name="_continue">{% endif %}
+{% if show_save_and_add_another %}<input type="submit" value="Speichern und neuen Artikel anlegen" name="_addanother">{% endif %}
+{% if show_close %}<a href="{% url opts|admin_urlname:'changelist' %}" class="closelink">Schließen</a>{% endif %}
+{% if show_delete_link and original %}<a href="{% url opts|admin_urlname:'delete' original.pk|admin_urlquote %}" class="deletelink">Löschen</a>{% endif %}
+</div>
