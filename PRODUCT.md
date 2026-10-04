@@ -1,4 +1,4 @@
-# KAKTUS — verbindlicher Produktkontext
+# Schulgeflüster — verbindlicher Produktkontext
 
 <!-- impeccable:product-schema 1 -->
 
@@ -18,7 +18,7 @@ Stand: 25.09.2026. Quelle: beide Konzeptdateien im Root und die vom Nutzer best�
 
 ## Verbindliche Entscheidungen
 
-- Aktueller Name KAKTUS; Name, Untertitel und Branding austauschbar. logo.jpg ist ergänzendes Schullogo, nicht das Hauptlogo der Zeitung. Bildquelle ist nur 202 × 249 Pixel groß: nicht als große Grafik hochskalieren.
+- Aktueller Name Schulgeflüster; Name, Untertitel und Branding austauschbar. logo.jpg ist ergänzendes Schullogo, nicht das Hauptlogo der Zeitung. Bildquelle ist nur 202 × 249 Pixel groß: nicht als große Grafik hochskalieren.
 - Klassische journalistische Hierarchie: ein Aufmacher, weitere aktuelle Nachrichten, Rubriken, Pausenecke weiter unten. Orange und Rot verbinden die Gestaltung; jugendlich, aber nicht kindlich.
 - Vor Frontend-Code: drei Startseitenrichtungen als PNG mit Desktop- und Mobilansicht vorlegen. Nutzer wählt eine Richtung. Anschließend Detailmockups erstellen und freigeben lassen. Keine Richtung stillschweigend auswählen.
 - Django mit serverseitigen Templates, eigener User-Klasse vor erster Migration, PostgreSQL und angepasstem deutschsprachigem Django-Admin. Kein separater Frontend-Server, keine REST-API, kein Redis und keine Job-Queue für den Start.

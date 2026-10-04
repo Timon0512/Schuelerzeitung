@@ -210,7 +210,7 @@ class SlugRedirect(models.Model):
 
 class SiteSetting(models.Model):
     id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
-    publication_name = models.CharField("Zeitungsname", max_length=80, default="KAKTUS")
+    publication_name = models.CharField("Zeitungsname", max_length=80, default="Schulgeflüster")
     tagline = models.CharField("Untertitel", max_length=200, blank=True)
     school_name = models.CharField("Schule", max_length=160, default="Aggertal-Gymnasium")
     logo = models.ForeignKey(Media, null=True, blank=True, on_delete=models.PROTECT)

@@ -12,12 +12,13 @@ from django.utils.html import strip_tags
 from django.views.decorators.http import require_safe
 
 from .content import clean_body
-from .models import Category, SiteSetting
+from .models import Category
 from .selectors import public_articles, public_authors, resolve_article
+from .site_settings import get_site_settings
 
 
 def site_context():
-    return {"site": SiteSetting.objects.select_related("logo").first() or SiteSetting(),
+    return {"site": get_site_settings(),
             "nav_categories": Category.objects.filter(is_active=True)}
 
 
@@ -148,13 +149,12 @@ def information(request, page):
 
 
 def error_404(request, exception):
-    # No database dependency: these pages also work during an outage.
-    return render(request, "news/error.html", {"site": SiteSetting(), "title": "Seite nicht gefunden",
+    return render(request, "news/error.html", {"site": get_site_settings(tolerate_database_error=True), "title": "Seite nicht gefunden",
         "error_message": "Diese Seite ist nicht verfügbar. Vielleicht wurde der Artikel zurückgezogen oder die Adresse geändert.",
         "noindex": True}, status=404)
 
 
 def error_500(request):
-    return render(request, "news/error.html", {"site": SiteSetting(), "title": "Gerade nicht erreichbar",
+    return render(request, "news/error.html", {"site": get_site_settings(tolerate_database_error=True), "title": "Gerade nicht erreichbar",
         "error_message": "Die Zeitung kann gerade nicht geladen werden. Bitte versuche es später noch einmal.",
         "noindex": True}, status=500)

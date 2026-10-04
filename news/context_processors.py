@@ -1,4 +1,11 @@
 from submissions.models import Submission
+from .site_settings import get_site_settings
+
+
+def admin_branding(request):
+    if not request.path.startswith("/admin/"):
+        return {}
+    return {"publication_name": get_site_settings(tolerate_database_error=True).publication_name}
 
 
 def admin_submission_notifications(request):

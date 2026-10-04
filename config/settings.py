@@ -29,7 +29,8 @@ TEMPLATES = [{"BACKEND": "django.template.backends.django.DjangoTemplates", "DIR
               "APP_DIRS": True, "OPTIONS": {"context_processors": [
                   "django.template.context_processors.request", "django.contrib.auth.context_processors.auth",
                   "django.contrib.messages.context_processors.messages",
-                  "news.context_processors.admin_submission_notifications"]}}]
+                  "news.context_processors.admin_submission_notifications",
+                  "news.context_processors.admin_branding"]}}]
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 DATABASES = {"default": {

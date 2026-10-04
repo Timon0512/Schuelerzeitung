@@ -1,4 +1,4 @@
-# KAKTUS – Schülerzeitung
+# Schulgeflüster – Schülerzeitung
 
 Paket 7 ergänzt [Dockerfile](Dockerfile), [produktives Compose](compose.production.yaml),
 eine Proxyvorlage sowie [Betriebs-/Backup-/Restore-Anleitung](docs/BETRIEB.md) und

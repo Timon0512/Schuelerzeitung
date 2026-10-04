@@ -1,7 +1,7 @@
 [project]
 name = "schuelerzeitung"
 version = "0.1.0"
-description = "KAKTUS – Schülerzeitung mit Django und PostgreSQL"
+description = "Schulgeflüster – Schülerzeitung mit Django und PostgreSQL"
 requires-python = ">=3.12"
 dependencies = [
     "Django>=5.2,<5.3",

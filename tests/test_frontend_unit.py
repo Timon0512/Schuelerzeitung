@@ -34,9 +34,24 @@ class FrontendUnitTests(SimpleTestCase):
         self.assertNotIn('stale', rendered)
 
     def test_error_pages_need_no_database(self):
+        from django.db import OperationalError
         request = RequestFactory().get('/missing')
-        self.assertEqual(public.error_404(request, Exception()).status_code, 404)
-        self.assertEqual(public.error_500(request).status_code, 500)
+        with patch('news.site_settings.SiteSetting.objects.select_related', side_effect=OperationalError):
+            self.assertEqual(public.error_404(request, Exception()).status_code, 404)
+            self.assertEqual(public.error_500(request).status_code, 500)
+
+    def test_configured_name_in_admin_and_error_pages(self):
+        from news.context_processors import admin_branding
+        from django.template.loader import render_to_string
+        request = RequestFactory().get('/admin/login/')
+        with patch('news.site_settings.SiteSetting.objects.select_related') as query:
+            query.return_value.first.return_value = SiteSetting(publication_name='Neuer Zeitungsname')
+            branding = admin_branding(request)
+            html = render_to_string('admin/base_site.html', {'title': 'Anmelden', **branding})
+            self.assertIn('Neuer Zeitungsname Redaktion', html)
+            request = RequestFactory().get('/missing')
+            for response in (public.error_404(request, Exception()), public.error_500(request)):
+                self.assertIn('Neuer Zeitungsname', response.content.decode())
 
     def test_submission_limits_and_honeypot(self):
         from news.submission_ui import SubmissionUIForm

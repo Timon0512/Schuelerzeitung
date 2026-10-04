@@ -1,5 +1,5 @@
 ---
-name: KAKTUS — Klassische Zeitung
+name: Schulgeflüster — Klassische Zeitung
 description: Freigegebene Option A für die Schülerzeitung des Aggertal-Gymnasiums
 colors:
   paper: "#FAF8F4"
@@ -63,7 +63,7 @@ components:
     padding: "12px 16px"
 ---
 
-# Design System: KAKTUS
+# Design System: Schulgeflüster
 
 ## Overview
 
