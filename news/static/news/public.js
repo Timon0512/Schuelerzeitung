@@ -1,3 +1,29 @@
+// Keep configurable publication names on one line within the masthead.
+(() => {
+  const wordmark = document.querySelector('.wordmark');
+  const name = wordmark?.querySelector('a');
+  if (!name) return;
+  function fitName() {
+    name.style.removeProperty('font-size');
+    let size = parseFloat(getComputedStyle(name).fontSize);
+    let width = name.getBoundingClientRect().width;
+    const available = wordmark.clientWidth;
+    // Variable fonts can change their optical metrics as their size changes.
+    for (let pass = 0; pass < 4 && width > available && available > 0; pass++) {
+      size *= (available - 1) / width;
+      name.style.fontSize = `${size}px`;
+      width = name.getBoundingClientRect().width;
+    }
+  }
+  fitName();
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(fitName).observe(wordmark);
+  } else {
+    window.addEventListener('resize', fitName);
+  }
+  document.fonts?.ready.then(fitName);
+})();
+
 // Reading and navigation work without JS; this adds a mobile focus-managed menu.
 (() => {
   const toggle = document.querySelector('.menu-toggle');

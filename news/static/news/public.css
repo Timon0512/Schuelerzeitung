@@ -171,13 +171,14 @@ ul,ol {
   min-width:0
 }
 .wordmark>a {
+  display:inline-block;
   font-size:clamp(5rem,6.5vw,6rem);
   line-height:1.05;
   font-weight:700;
   letter-spacing:-.035em;
   color:var(--ink);
   text-decoration:none;
-  overflow-wrap:anywhere
+  white-space:nowrap
 }
 .wordmark p {
   font-size:18px;
