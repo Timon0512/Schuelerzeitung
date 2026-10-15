@@ -7,7 +7,7 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-dev --no-install-project --python /usr/local/bin/python
 ENV PATH="/app/.venv/bin:$PATH"
 COPY . .
-RUN DJANGO_SECRET_KEY=build-only-not-a-runtime-secret python manage.py collectstatic --noinput \
+RUN DJANGO_SECRET_KEY=build-only-not-a-runtime-secret python manage.py collectstatic --noinput --settings=config.settings_build \
     && groupadd --gid 10001 kaktus \
     && useradd --uid 10001 --gid 10001 --no-create-home kaktus \
     && mkdir -p /data/private && chown 10001:10001 /data/private
