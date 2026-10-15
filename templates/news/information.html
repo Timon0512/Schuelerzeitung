@@ -1,9 +1,13 @@
 {% extends 'news/base.html' %}{% block content %}<article class="text-page"><h1>{{ title }}</h1>{% if information_page == 'mitmachen' %}<p class="intro">Dein Blick auf die Schule gehört in die Zeitung.</p><p>Ein Bericht, eine Meinung, eine Geschichte: Du kannst jetzt online einen eigenen Beitrag für {{ site.publication_name }} einreichen.</p><h2>Von deiner Idee zum Artikel</h2><ol><li>Schreibe deinen Text und gib ihm einen passenden Titel.</li><li>Reiche deinen Beitrag online ein. Die Redaktion liest und prüft ihn vor der Veröffentlichung.</li><li>Erst nach Freigabe erscheint der Artikel. Dein öffentlicher Autorenname wird bewusst festgelegt; deine Klasse bleibt intern.</li></ol><a class="button" href="{% url 'submission' %}">Artikel einreichen</a>{% elif information_page == 'ueber-uns' %}<p class="intro">{{ site.publication_name }} ist die Schülerzeitung am {{ site.school_name }}.</p><p>Hier finden Nachrichten, Meinungen und Geschichten aus der Schulgemeinschaft ihren Platz. Beiträge werden vor der Veröffentlichung redaktionell geprüft.</p><p>Welche Namen öffentlich erscheinen, entscheidet die Redaktion bewusst. Interne Klassenangaben aus Einsendungen werden nicht veröffentlicht.</p><a href="{% url 'authors' %}">Die Redaktion kennenlernen</a>{% elif information_page == 'impressum' %}
 <p class="intro">{{ site.publication_name }} · Schülerzeitung am Aggertal-Gymnasium Engelskirchen</p>
 <h2>Anbieter und Kontakt</h2>
+<p>Das Aggertal-Gymnasium Engelskirchen ist Anbieter dieser Schülerzeitung und für das Angebot sowie die redaktionellen Inhalte verantwortlich.</p>
 {% include 'news/legal_school_contact.html' %}
 <h2>Schulleitung</h2>
 <p>OStD Balthasar Rechner, Schulleiter<br>StD Christian Baitz, stellvertretender Schulleiter</p>
+<h2>Gestaltung, Hosting und technischer Betrieb</h2>
+{% include 'news/legal_host_contact.html' %}
+<p>Timon Franz übernimmt die Gestaltung, das Hosting und den technischen Betrieb dieser Website. Die redaktionelle Verantwortung liegt bei der Schule.</p>
 <h2>Urheberrecht</h2>
 <p>Texte, Fotos, Grafiken und Gestaltung sind urheberrechtlich geschützt. Eine Weiterverwendung bedarf der erforderlichen Genehmigung der Rechteinhaber.</p>
 <h2>Inhalte und externe Links</h2>
@@ -13,15 +17,21 @@
 {% elif information_page == 'datenschutz' %}
 <p class="intro">Informationen zum Umgang mit personenbezogenen Daten.</p>
 <h2>Verantwortlicher</h2>
-<p>Balthasar Rechner, Schulleiter</p>
+<p>Für die Verarbeitung personenbezogener Daten dieser Schülerzeitung ist das Aggertal-Gymnasium Engelskirchen, vertreten durch den Schulleiter Balthasar Rechner, verantwortlich.</p>
 {% include 'news/legal_school_contact.html' %}
 <h2>Schulischer Datenschutzbeauftragter</h2>
 <p>Industriestr. 2<br>51643 Gummersbach<br>Telefon: <a href="tel:+492261884234">02261 88-4234</a><br>E-Mail: <a href="mailto:datenschutz-schule@obk.de">datenschutz-schule@obk.de</a></p>
 <h2>Deine Rechte</h2>
 <p>Du kannst Auskunft, Berichtigung, Löschung, Einschränkung, Widerspruch und Datenübertragbarkeit nach den Voraussetzungen der DSGVO verlangen. Beschwerden kannst du an die Datenschutzaufsicht richten:</p>
 <p>Landesbeauftragte für Datenschutz und Informationsfreiheit Nordrhein-Westfalen<br>Postfach 20 04 44<br>40102 Düsseldorf<br>Telefon: <a href="tel:+49211384240">0211/38424-0</a><br>Fax: 0211/38424-10<br>E-Mail: <a href="mailto:poststelle@ldi.nrw.de">poststelle@ldi.nrw.de</a></p>
-<h2>Website und Kontakt</h2>
-<p>Die Schule beschreibt technisch erforderliche Serverprotokolle mit IP-Adresse, Zugriffszeit, Herkunftsseite, Hostname, Browser und Betriebssystem. Kontaktangaben werden zur Bearbeitung einer Anfrage genutzt und anschließend gelöscht, sobald sie nicht mehr benötigt werden. Als Rechtsgrundlage nennt sie Art. 6 Abs. 1 lit. e, Abs. 3 DSGVO in Verbindung mit § 3 Abs. 1 DSG NRW.</p>
+<h2>Hosting und technische Bereitstellung</h2>
+<p>Diese Schülerzeitung wird auf einem von Timon Franz selbst betriebenen Server in Deutschland bereitgestellt. Timon Franz übernimmt als technischer Dienstleister das Hosting und den technischen Betrieb für die Schule. Die Schule bleibt für die Datenverarbeitung verantwortlich.</p>
+{% include 'news/legal_host_contact.html' %}
+<p>Beim Aufruf verarbeitet der Server technisch notwendige Verbindungsdaten, insbesondere die IP-Adresse, den Zeitpunkt, die aufgerufene Adresse, den HTTP-Status, die übertragene Datenmenge, die Herkunftsseite (Referrer) sowie Browser- und Betriebssysteminformationen. Dies dient der Bereitstellung der Website sowie ihrer Stabilität und Sicherheit. Rechtsgrundlage ist Art. 6 Abs. 1 lit. e, Abs. 3 DSGVO in Verbindung mit § 3 Abs. 1 DSG NRW.</p>
+<p>Zugriffsprotokolle werden spätestens nach sieben Tagen gelöscht. Diese Frist betrifft ausschließlich die Zugriffsprotokolle, nicht die nachfolgend beschriebenen Artikeleinsendungen, Cookies und Herz-Reaktionen.</p>
+<p>Personenbezogene Daten aus dieser Schülerzeitung werden nicht für Werbung von Timon Franz verwendet. Der Link zu seiner Website im Footer dient als Hinweis auf seine Leistungen; er verwendet kein Tracking.</p>
+<h2>Kontakt mit der Schule</h2>
+<p>Kontaktangaben werden zur Bearbeitung einer Anfrage genutzt und anschließend gelöscht, sobald sie nicht mehr benötigt werden. Rechtsgrundlage ist Art. 6 Abs. 1 lit. e, Abs. 3 DSGVO in Verbindung mit § 3 Abs. 1 DSG NRW.</p>
 <h2>Artikeleinsendungen</h2>
 <p>Beim Einreichen speichert diese Schülerzeitung deinen Namen, deine Klasse oder deinen Jahrgang, Titel, Kategorie, Beitragstext, gegebenenfalls ein Bild und die Bestätigung deiner Urheberschaft. Die Redaktion nutzt diese Angaben zur Prüfung und Bearbeitung des Beitrags. Name und Klasse aus dem Formular bleiben intern; der öffentliche Autorenname wird gesondert festgelegt. Beiträge erscheinen erst nach redaktioneller Freigabe.</p>
 <h2>Cookies und Herz-Reaktionen</h2>

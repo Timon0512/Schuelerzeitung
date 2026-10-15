@@ -164,7 +164,7 @@ Fehlende Datei oder unzugängliches Konto bedeutet fehlgeschlagene Abnahme.
 
 ## Startfreigabe und laufender Betrieb
 
-- Schulisch bestätigte Impressums-/Datenschutztexte statt Platzhaltern.
+- Impressum und Datenschutz mit der Schule abstimmen und aktuell halten: Schule als Anbieter und Verantwortlicher, Timon Franz für Gestaltung, Hosting und technischen Betrieb. Eigenhosting in Deutschland und maximal sieben Tage Speicherung der Zugriffsprotokolle sind vom Betreiber bestätigt; weitere Aufbewahrungsfristen bleiben gesondert festzulegen.
 - Bestätigte Aufbewahrungsfristen für Einsendungen, Herzen, Logs und Backups.
 - Namens-/Bildfreigaben und bewusst gewählte Autorendarstellungen.
 - Echte Domain, Zertifikatserneuerung, Hosts/Origins, Proxyvertrauen und DB-Firewall geprüft.

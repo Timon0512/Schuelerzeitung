@@ -717,6 +717,7 @@ fieldset {
 }
 .site-footer {
   display:flex;
+  flex-wrap:wrap;
   justify-content:space-between;
   gap:var(--lg);
   align-items:center;

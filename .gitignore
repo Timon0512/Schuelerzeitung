@@ -1,4 +1,6 @@
 .env
+.env.dev
+env.dev
 .venv/
 .venv-backend/
 .uv-cache/
@@ -10,5 +12,6 @@ node_modules/
 .npm-cache/
 .qa/
 deploy/production.env
+deploy/migration.env
 var/
 backups/

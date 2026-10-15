@@ -1,4 +1,47 @@
-# Übergabe — 26.09.2026
+# Übergabe — 15.10.2026
+
+## Hostinghinweis und Rechtstexte aktualisiert
+
+Dieser Abschnitt ergänzt den historischen Paketstand unten. Die dortigen Hinweise
+auf ausstehende Rechtstext-Platzhalter beschreiben den damaligen Stand.
+
+- Gemeinsamer Footer: normaler Link „Webdesign & Hosting: Timon Franz“ auf
+  `https://timon-franz.de/`, mit Zeilenumbruch bei Platzmangel und ohne Tracking.
+- Impressum und Datenschutz: Schule als Anbieter und Verantwortlicher, Timon Franz
+  für Gestaltung, Hosting und technischen Betrieb; gemeinsame Hosting-Kontaktdaten
+  in `templates/news/legal_host_contact.html`. Schulische Kontaktdaten beibehalten.
+- Vom Nutzer bestätigtes Eigenhosting in Deutschland und Löschung der
+  Zugriffsprotokolle spätestens nach sieben Tagen beschrieben. Die Frist gilt nicht
+  für Einsendungen, Cookies oder Reaktionen. Keine abgeschlossene AVV behauptet.
+- README und Betriebshinweise aktualisiert. Zieladresse:
+  `https://sz-aggertal-gymnasium.timon-franz.de/`. Der Nutzer übernimmt DNS, HTTPS,
+  Django-Hosts/CSRF-Origins und die dauerhafte Weiterleitung der bisherigen Domain
+  einschließlich Pfad und Querystring. Keine Server- oder Datenbankänderungen.
+
+### Prüfung
+
+- Mit prozesslokalem `DJANGO_ENV=development`, `DJANGO_DEBUG=true` und erlaubtem
+  `localhost`: `.venv-backend/Scripts/python.exe -m tests.frontend_fixtures`
+  rendert 24 Ansichten; `-m unittest tests.test_frontend_unit` besteht alle 6 Tests.
+  Die lokale `.env` wurde nicht geändert; keine Datenbankverbindung verwendet.
+- Bestehende Browserprüfung aus `tests/browser_frontend.cjs` als temporäre Kopie
+  unter `.qa/check_hosting.cjs` um Footer-Link-/Fokusprüfungen und Screenshots der
+  Rechtstexte ergänzt. Mit gebündeltem Playwright und explizitem Browsercache unter
+  `C:/Users/Timon/AppData/Local/ms-playwright`: 24 Ansichten bei 360, 768 und 1440 px,
+  kein Überlauf, keine JavaScript-Fehler und keine externen Anfragen; Navigation
+  auch ohne JavaScript geprüft. Footer und Rechtstexte visuell geprüft.
+- Canonical- und Open-Graph-URLs ohne Datenbank über `public_render` mit HTTPS und
+  beiden Domainnamen geprüft: Host wird aus dem Request übernommen.
+- Impeccable-Detektor einmal ausgeführt: nur Hinweise zu vorhandenen Schriftgrößen
+  und fehlender Auflösung des Django-Static-Tags; die tatsächlich geladenen Farben,
+  Schriften und Styles wurden im Browser geprüft. Keine Designänderung außerhalb
+  des Footer-Umbruchs. `git diff --check` ohne Fehler.
+- Bereits vorhandene Änderungen an Installationsdateien und `.gitignore` erhalten.
+  Kein Commit und keine Veröffentlichung vorgenommen.
+
+---
+
+# Historische Übergabe — 26.09.2026
 
 ## Paket 7 – Betrieb implementiert, Gesamtabnahme mit externen Blockern
 

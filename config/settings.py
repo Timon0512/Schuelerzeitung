@@ -1,10 +1,14 @@
 import os
+import sys
 from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env", override=False)
+ENV_FILE = BASE_DIR / (".env.dev" if len(sys.argv) > 1 and sys.argv[1] == "runserver" else ".env")
+if ENV_FILE.name == ".env.dev" and not ENV_FILE.is_file():
+    raise ImproperlyConfigured("Für runserver fehlt die lokale Konfiguration .env.dev.")
+load_dotenv(ENV_FILE, override=False)
 ENVIRONMENT = os.getenv("DJANGO_ENV", "development")
 DEBUG = os.getenv("DJANGO_DEBUG", "false").lower() == "true"
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "")
@@ -51,7 +55,11 @@ STATIC_URL = "/static/"
 STATIC_ROOT = Path(os.getenv("DJANGO_STATIC_ROOT", str(BASE_DIR / "staticfiles")))
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    "staticfiles": {"BACKEND": (
+        "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        if ENVIRONMENT == "production"
+        else "django.contrib.staticfiles.storage.StaticFilesStorage"
+    )},
 }
 MEDIA_ROOT = Path(os.getenv("DJANGO_MEDIA_ROOT", str(BASE_DIR / "media" / "private")))
 # No public filesystem URL or development static() mapping for uploaded files.
