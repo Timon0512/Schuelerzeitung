@@ -4,7 +4,7 @@ from math import ceil
 
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
@@ -15,6 +15,7 @@ from .content import clean_body
 from .models import Category
 from .selectors import public_articles, public_authors, resolve_article
 from .site_settings import get_site_settings
+from .seo import metadata, plain_description
 
 
 def site_context():
@@ -25,16 +26,25 @@ def site_context():
 def public_render(request, template, context=None, *, status=200):
     data = site_context()
     data.update(context or {})
-    data.setdefault("description", "Die Schülerzeitung des " + data["site"].school_name + ".")
     page = data.get("page_obj")
     canonical_path = request.path + (f"?page={page.number}" if page and page.number > 1 else "")
     data.setdefault("canonical", request.build_absolute_uri(canonical_path))
+    data.update(metadata(request, data))
     response = render(request, template, data, status=status)
     # Withdrawals and changes to author/media grants must take effect next request.
     response["Cache-Control"] = "private, no-store"
     if data.get("noindex"):
         response["X-Robots-Tag"] = "noindex, nofollow"
     return response
+
+
+@require_safe
+def robots(request):
+    # Keep noindex pages crawlable so crawlers can read their exclusion tags.
+    sitemap_url = request.build_absolute_uri(reverse("sitemap"))
+    return HttpResponse(
+        f"User-agent: *\nDisallow: /admin/\nDisallow: /redaktion/\n\nSitemap: {sitemap_url}\n",
+        content_type="text/plain; charset=utf-8")
 
 
 def paginate(request, articles):
@@ -83,7 +93,7 @@ def article_context(article, *, images=None, private=False):
         captions = {str(placement.media_id): placement.caption for placement in placements}
     elif article.pk and not article._state.adding:
         captions = {str(p.media_id): p.caption for p in article.image_placements.all()}
-    return {"article": article, "title": article.title, "description": article.excerpt or strip_tags(article.body)[:180],
+    return {"article": article, "title": article.title, "description": plain_description(article.excerpt or article.body),
             "article_body": clean_body(article.body, images, private=private, render=True, captions=captions),
             "reading_minutes": max(1, ceil(len(strip_tags(article.body).split()) / 200)),
             "is_preview": private, "noindex": private, "og_type": "article"}

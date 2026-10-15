@@ -1,0 +1,23 @@
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta property="og:title" content="{% firstof seo_title title site.publication_name %}">
+<meta property="og:description" content="{{ description }}">
+<meta property="og:type" content="{{ og_type|default:'website' }}">
+<meta property="og:locale" content="de_DE">
+<meta property="og:site_name" content="{{ site.publication_name }}">
+{% if canonical %}<meta property="og:url" content="{{ canonical }}">{% endif %}
+{% if og_image %}
+<meta property="og:image" content="{{ og_image }}">
+<meta property="og:image:alt" content="{{ article.hero_image.alt_text }}">
+<meta property="og:image:width" content="{{ article.hero_image.width }}">
+<meta property="og:image:height" content="{{ article.hero_image.height }}">
+{% endif %}
+<meta name="twitter:card" content="{% if og_image %}summary_large_image{% else %}summary{% endif %}">
+<meta name="twitter:title" content="{% firstof seo_title title site.publication_name %}">
+<meta name="twitter:description" content="{{ description }}">
+{% if og_image %}<meta name="twitter:image" content="{{ og_image }}"><meta name="twitter:image:alt" content="{{ article.hero_image.alt_text }}">{% endif %}
+{% if og_type == 'article' %}
+{% if article.published_at %}<meta property="article:published_time" content="{{ article.published_at|date:'c' }}">{% endif %}
+{% if article.updated_at %}<meta property="article:modified_time" content="{{ article.updated_at|date:'c' }}">{% endif %}
+<meta property="article:section" content="{{ article.category.name }}">
+{% endif %}
+{% if structured_data %}<script type="application/ld+json">{{ structured_data }}</script>{% endif %}

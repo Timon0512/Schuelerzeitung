@@ -1,5 +1,35 @@
 # Übergabe — 15.10.2026
 
+## Technisches SEO und Anleitung zur Google-Indexierung
+
+- `news/seo.py`, `news/public.py` und `templates/news/seo.html`: spezifische Titel
+  und Beschreibungen für öffentliche Seiten, Seitennummern in Listenmetadaten,
+  sichere JSON-LD-Ausgabe (`WebSite`/`NewsArticle`), ergänzte Social-Metadaten und
+  große Bildvorschauen. Autorennamen nur bei öffentlicher Freigabe; `noindex`-Seiten
+  enthalten keine strukturierten oder Social-Daten. Canonicals und bestehendes
+  `no-store` bleiben erhalten. Keine sichtbare Layoutänderung.
+- `config/urls.py`: öffentliche, datenbankfreie `/robots.txt` mit Sitemap-Verweis
+  auf den Request-Host. `config/settings.py`, beide Env-Beispiele und Basisvorlage:
+  optionaler HTML-Bestätigungstag über `GOOGLE_SITE_VERIFICATION`.
+- `docs/SEO.md` und README: konkrete Schritte für DNS/HTTPS, getrennte
+  Search-Console-Auswertung der Subdomain, Bestätigung und Indexierungsantrag.
+  Hauptdomain und Schülerzeitung benötigen keinen identischen Themenschwerpunkt.
+
+Prüfung mit prozesslokalem `DJANGO_ENV=development`, `DJANGO_DEBUG=true`:
+`python -m unittest tests.test_seo_unit tests.test_frontend_unit
+tests.test_configuration tests.test_deployment_unit -q`: **24 Tests bestanden**.
+Nach abschließender Textkorrektur zusätzlich die **10 SEO-Tests bestanden**.
+`python manage.py check`: **keine Probleme**. `git diff --check`: bestanden.
+Die Tests verwenden keine Datenbankverbindung; Konfigurationstests melden
+erwartete Warnungen zum isolierten Überschreiben der Datenbankeinstellungen.
+
+Nicht veröffentlicht und nicht in Search Console angemeldet. Der öffentliche
+Webabruf war hier nicht möglich; auch die lokale DNS-Auflösung der vorgesehenen
+Subdomain schlug fehl (`getaddrinfo failed`). Das beweist keinen allgemeinen
+DNS-Ausfall. Live-Status, Proxyheader und öffentliche Sitemaps nach Deployment
+gemäß Anleitung prüfen. Keine vorhandenen Umgebungsdateien oder Datenbanken
+verändert; keine Migration erforderlich.
+
 ## Hostinghinweis und Rechtstexte aktualisiert
 
 Dieser Abschnitt ergänzt den historischen Paketstand unten. Die dortigen Hinweise

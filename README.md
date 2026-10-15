@@ -1,5 +1,11 @@
 # Schulgeflüster – Schülerzeitung
 
+Technisches SEO und die Anmeldung der Subdomain bei Google sind in
+[SEO und Google-Indexierung](docs/SEO.md) beschrieben. Die Anwendung liefert
+`/robots.txt`, Sitemap, seitenspezifische Metadaten sowie strukturierte Daten
+für Zeitung und öffentliche Artikel. Die optionale Search-Console-Bestätigung
+per HTML-Tag wird über `GOOGLE_SITE_VERIFICATION` konfiguriert.
+
 Paket 7 ergänzt [Dockerfile](Dockerfile), [produktives Compose](compose.production.yaml),
 eine Proxyvorlage sowie [Betriebs-/Backup-/Restore-Anleitung](docs/BETRIEB.md) und
 die kurze [Bedienungsanleitung für die Lehrkraft](docs/LEHRKRAFT.md).

@@ -13,6 +13,7 @@ admin.site.site_header = "KAKTUS Redaktion"
 admin.site.site_title = "KAKTUS"
 admin.site.index_title = "Redaktionsverwaltung"
 urlpatterns = [path("admin/", admin.site.urls), path("medien/<uuid:pk>", media_file, name="media"),
+               path("robots.txt", public.robots, name="robots"),
                path("medien/<uuid:pk>/<str:variant>", media_file, name="media_variant"),
                path("redaktion/medien/<uuid:pk>/<str:variant>", private_media, name="private_media_variant"),
                path("redaktion/medien/<uuid:pk>", private_media, name="private_media"),

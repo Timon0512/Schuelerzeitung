@@ -1,10 +1,11 @@
 {% load static %}<!doctype html>
 <html lang="de"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% if title %}{{ title }} · {% endif %}{{ site.publication_name }}</title>
+<title>{% if seo_title %}{{ seo_title }}{% else %}{% if title %}{{ title }} · {% endif %}{{ site.publication_name }}{% endif %}</title>
 <meta name="description" content="{{ description|default:'Nachrichten und Perspektiven aus der Schulgemeinschaft.' }}">
 {% if noindex %}<meta name="robots" content="noindex,nofollow">{% elif canonical %}<link rel="canonical" href="{{ canonical }}">{% endif %}
-{% if not noindex %}<meta property="og:title" content="{{ title|default:site.publication_name }}"><meta property="og:description" content="{{ description }}"><meta property="og:type" content="{{ og_type|default:'website' }}"><meta property="og:locale" content="de_DE"><meta property="og:site_name" content="{{ site.publication_name }}">{% if canonical %}<meta property="og:url" content="{{ canonical }}">{% endif %}{% if og_image %}<meta property="og:image" content="{{ og_image }}"><meta property="og:image:alt" content="{{ article.hero_image.alt_text }}">{% endif %}{% endif %}
+{% if google_site_verification %}<meta name="google-site-verification" content="{{ google_site_verification }}">{% endif %}
+{% if not noindex %}{% include 'news/seo.html' %}{% endif %}
 <link rel="stylesheet" href="{% static 'news/public.css' %}"><script src="{% static 'news/public.js' %}" defer></script>
 </head><body><a class="skip-link" href="#inhalt">Zum Inhalt springen</a><div class="page-shell">
 <header class="masthead"><a href="{% url 'home' %}" class="school-mark" aria-label="{{ site.school_name }} – Startseite">{% if site.logo_id %}<img src="{% url 'site_logo' %}" width="49" height="60" alt="{{ site.logo.alt_text }}">{% else %}<img src="{% static 'news/school-logo.jpg' %}" width="49" height="60" alt="Schullogo">{% endif %}<span>{{ site.school_name }}</span></a>
