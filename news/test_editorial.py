@@ -85,10 +85,15 @@ class EditorialTests(TestCase):
         self.article.refresh_from_db()
         self.assertIsNone(self.article.hero_image_id)
         image = self.image(self.editor)
-        response = self.client.post(url, self.data(text_images=[str(image.pk)], body=f'<img data-media-id="{image.pk}" src="https://evil.test">'))
+        response = self.client.post(url, self.data(
+            body=f'<img data-media-id="{private.pk}"><img data-media-id="{image.pk}" src="https://evil.test">',
+        ))
         self.assertEqual(response.status_code, 302)
         self.article.refresh_from_db()
         self.assertIn(f"/medien/{image.pk}", self.article.body)
+        self.assertNotIn(str(private.pk), self.article.body)
+        self.assertNotIn("evil.test", self.article.body)
+        self.assertEqual(list(self.article.images.all()), [image])
         anonymous = Client()
         self.assertEqual(anonymous.get(reverse("private_media", args=[image.pk])).status_code, 302)
         self.assertEqual(anonymous.get(reverse("media", args=[image.pk])).status_code, 404)
@@ -98,6 +103,20 @@ class EditorialTests(TestCase):
         response.close()
         withdraw_article(self.article.pk, user=self.publisher)
         self.assertEqual(anonymous.get(reverse("media", args=[image.pk])).status_code, 404)
+
+    def test_text_images_follow_the_body_on_save_and_preview(self):
+        url = reverse("admin:news_article_change", args=[self.article.pk])
+        preview_url = reverse("article_preview")
+        first = self.image(self.editor)
+        second = self.image(self.editor)
+        body = f'<img data-media-id="{second.pk}"><p>Text</p><img data-media-id="{first.pk}"><img data-media-id="{second.pk}">'
+        response = self.client.post(preview_url, self.data(article_id=self.article.pk, body=body))
+        self.assertContains(response, f'/redaktion/medien/{second.pk}')
+        self.assertFalse(self.article.images.exists())
+        self.assertEqual(self.client.post(url, self.data(body=body)).status_code, 302)
+        self.assertEqual(list(self.article.image_placements.values_list("media_id", flat=True)), [second.pk, first.pk])
+        self.assertEqual(self.client.post(url, self.data(body=f'<img data-media-id="{first.pk}">')).status_code, 302)
+        self.assertEqual(list(self.article.images.all()), [first])
 
     def test_preview_uses_post_is_private_and_does_not_save(self):
         url = reverse("article_preview")

@@ -14,8 +14,8 @@ Rechten hilft die zuständige Administration. Passwörter nicht teilen.
    und bewusst freigegebene Autorendarstellung wählen. Name/Klasse werden nicht
    automatisch übernommen. Keine Klasse in den öffentlichen Text kopieren.
 4. Bilder prüfen. Unter **Bilder** sind JPEG, PNG und WebP bis 10 MB möglich.
-   Einen verständlichen Alternativtext eintragen. Für Bilder im Text zuerst die
-   gewünschten **Textbilder** auswählen, dann im Editor **Bild einfügen** verwenden.
+   Einen verständlichen Alternativtext eintragen. Für ein Bild im Artikeltext den
+   Cursor an die gewünschte Stelle setzen, auf **Bild einfügen** klicken und das Bild wählen.
 5. Text mit Absätzen, Zwischenüberschriften und passenden Links gestalten.
    **Ungespeicherte Vorschau öffnen** zeigt den aktuellen Stand in einem neuen Tab;
    sie speichert nichts. Danach **Entwurf speichern**. Vorschau auch auf schmalem

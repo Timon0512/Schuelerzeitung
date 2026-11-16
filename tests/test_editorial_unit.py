@@ -12,10 +12,11 @@ from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image, PngImagePlugin
 from news.content import clean_body
+from news.forms import ArticleForm
 from news.uploads import decode_image, MAX_BYTES
 from news.services import require_editor, require_publisher
 from django.template.loader import get_template
-from news.models import Article
+from news.models import Article, Media
 
 
 class ContentBoundaryTests(unittest.TestCase):
@@ -49,6 +50,25 @@ class ContentBoundaryTests(unittest.TestCase):
         preview = clean_body(value, [image], private=True)
         self.assertIn("/redaktion/medien/", preview)
         self.assertIn("&lt;privat&gt;", preview)
+
+    def test_article_form_derives_image_grants_from_the_body(self):
+        first = Media(pk=uuid.uuid4(), alt_text="Erstes Bild")
+        second = Media(pk=uuid.uuid4(), alt_text="Zweites Bild")
+        excluded, commented = uuid.uuid4(), uuid.uuid4()
+        form = ArticleForm()
+        form.cleaned_data = {"body": (
+            f'<img data-media-id="{second.pk}"><!-- <img data-media-id="{commented}"> -->'
+            f'<img data-media-id="{first.pk}"><img data-media-id="{second.pk}">'
+            f'<img data-media-id="{excluded}"><img data-media-id="">'
+        )}
+        with patch.object(form.fields["hero_image"].queryset, "in_bulk", return_value={
+            first.pk: first, second.pk: second,
+        }) as lookup:
+            data = form.clean()
+        lookup.assert_called_once_with([second.pk, first.pk, excluded])
+        self.assertEqual(data["text_images"], [second, first])
+        self.assertEqual(data["body"].count("<img"), 3)
+        self.assertNotIn(str(excluded), data["body"])
 
     def test_entity_text_stays_escaped(self):
         self.assertNotIn("<script", clean_body("<p>&lt;script&gt; &amp; &#60;img&#62;</p>"))

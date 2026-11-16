@@ -1,14 +1,37 @@
 """The only HTML boundary: images are resolved from explicit article grants."""
 from html import escape
 from html.parser import HTMLParser
+from uuid import UUID
 import nh3
+
+
+def sanitize_body(value):
+    return nh3.clean(value, tags={"p", "h2", "h3", "strong", "em", "ul", "ol", "li", "blockquote", "a", "br", "img"},
+                     attributes={"a": {"href", "title"}, "img": {"data-media-id"}},
+                     url_schemes={"http", "https", "mailto"})
+
+
+def body_image_ids(value):
+    ids = {}
+
+    class Images(HTMLParser):
+        def handle_starttag(self, tag, attrs):
+            if tag == "img":
+                image_id = dict(attrs).get("data-media-id") or ""
+                try:
+                    pk = UUID(image_id)
+                except ValueError:
+                    return
+                if str(pk) == image_id:
+                    ids[pk] = None
+
+    parser = Images()
+    parser.feed(sanitize_body(value))
+    return list(ids)
 
 
 def clean_body(value, images=(), *, private=False, render=False, captions=None):
     allowed = {str(image.pk): image for image in images}
-    cleaned = nh3.clean(value, tags={"p", "h2", "h3", "strong", "em", "ul", "ol", "li", "blockquote", "a", "br", "img"},
-                        attributes={"a": {"href", "title"}, "img": {"data-media-id"}},
-                        url_schemes={"http", "https", "mailto"})
 
     class Images(HTMLParser):
         def __init__(self):
@@ -51,5 +74,5 @@ def clean_body(value, images=(), *, private=False, render=False, captions=None):
             self.output.append(f"&#{name};")
 
     parser = Images()
-    parser.feed(cleaned)
+    parser.feed(sanitize_body(value))
     return "".join(parser.output)

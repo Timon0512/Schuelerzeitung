@@ -3,11 +3,16 @@ import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 
 const InternalImage = Image.extend({
+  addOptions() {
+    return { ...this.parent?.(), isAllowed: () => false };
+  },
+  addInputRules() {
+    return [];
+  },
   parseHTML() {
     return [{ tag: 'img[data-media-id]', getAttrs: element => {
       const id = element.getAttribute('data-media-id');
-      const selected = [...document.querySelectorAll('#id_text_images option:checked')].some(option => option.value === id);
-      return selected && /^[a-f0-9-]{36}$/.test(id || '') ? null : false;
+      return this.options.isAllowed(id) ? null : false;
     }}];
   },
   addAttributes() {
@@ -24,25 +29,29 @@ const InternalImage = Image.extend({
 
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('textarea.kaktus-editor').forEach(textarea => {
+    // The cover image field already lists the media allowed for this article.
+    const library = textarea.form.elements.namedItem('hero_image');
+    const imageOptions = () => Array.from(library?.options ?? []).filter(option => option.value);
     const wrapper = document.createElement('div');
     wrapper.className = 'editor-wrapper';
     const toolbar = document.createElement('div');
     toolbar.className = 'editor-toolbar';
     toolbar.setAttribute('role', 'group');
     toolbar.setAttribute('aria-label', 'Text formatieren');
+    const picker = document.createElement('div');
+    picker.id = `${textarea.id}-image-picker`;
+    picker.className = 'editor-image-picker';
+    picker.hidden = true;
     const surface = document.createElement('div');
-    wrapper.append(toolbar, surface);
+    wrapper.append(toolbar, picker, surface);
     textarea.after(wrapper);
-    const parsed = new DOMParser().parseFromString(textarea.value, 'text/html');
-    parsed.querySelectorAll('img').forEach(img => {
-      const id = img.getAttribute('data-media-id');
-      if (/^[a-f0-9-]{36}$/.test(id || '')) img.src = `/redaktion/medien/${id}`;
-      else img.remove();
-    });
     const editor = new Editor({
       element: surface,
-      extensions: [StarterKit.configure({ heading: { levels: [2, 3] }, code: false, codeBlock: false, horizontalRule: false, strike: false, underline: false, link: { openOnClick: false, protocols: ['http', 'https', 'mailto'] } }), InternalImage],
-      content: parsed.body.innerHTML,
+      extensions: [
+        StarterKit.configure({ heading: { levels: [2, 3] }, code: false, codeBlock: false, horizontalRule: false, strike: false, underline: false, link: { openOnClick: false, protocols: ['http', 'https', 'mailto'] } }),
+        InternalImage.configure({ isAllowed: id => imageOptions().some(option => option.value === id) }),
+      ],
+      content: textarea.value,
       editorProps: { attributes: { role: 'textbox', 'aria-multiline': 'true', 'aria-label': 'Artikeltext' } },
       onUpdate: ({ editor }) => { textarea.value = editor.getHTML(); },
     });
@@ -57,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         editor.on('transaction', update); update();
       }
       toolbar.append(button);
+      return button;
     };
     addButton('Absatz', () => editor.chain().focus().setParagraph().run());
     addButton('Zwischenüberschrift', () => editor.chain().focus().toggleHeading({ level: 2 }).run(), () => editor.isActive('heading'));
@@ -70,16 +80,49 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (/^(https?:\/\/|mailto:)/i.test(href)) editor.chain().focus().extendMarkRange('link').setLink({ href }).run();
       else window.alert('Bitte eine vollständige sichere Linkadresse eingeben.');
     });
-    const picker = document.createElement('select');
-    picker.setAttribute('aria-label', 'Ausgewähltes Textbild einfügen');
-    const refresh = () => {
-      picker.replaceChildren(new Option('Textbild auswählen', ''));
-      document.querySelectorAll('#id_text_images option:checked').forEach(option => picker.add(new Option(option.textContent, option.value)));
+    const closePicker = () => {
+      picker.hidden = true;
+      insertButton.setAttribute('aria-expanded', 'false');
     };
-    document.querySelector('#id_text_images')?.addEventListener('change', refresh);
-    refresh(); toolbar.append(picker);
-    addButton('Bild einfügen', () => {
-      if (picker.value) editor.chain().focus().setImage({ src: `/redaktion/medien/${picker.value}`, mediaId: picker.value, alt: picker.selectedOptions[0].textContent }).run();
+    const insertButton = addButton('Bild einfügen', () => {
+      if (!picker.hidden) {
+        closePicker();
+        return;
+      }
+      const options = imageOptions();
+      if (options.length) {
+        picker.replaceChildren(...options.map(option => {
+          const choice = document.createElement('button');
+          choice.type = 'button';
+          choice.textContent = option.textContent;
+          choice.addEventListener('click', () => {
+            editor.chain().focus().setImage({
+              src: `/redaktion/medien/${option.value}`,
+              mediaId: option.value,
+              alt: option.textContent,
+            }).run();
+            closePicker();
+          });
+          return choice;
+        }));
+      } else {
+        const message = document.createElement('p');
+        message.tabIndex = -1;
+        message.textContent = 'Noch keine Bilder verfügbar. Lade zuerst unter „Bilder“ ein Bild hoch.';
+        picker.replaceChildren(message);
+      }
+      picker.hidden = false;
+      insertButton.setAttribute('aria-expanded', 'true');
+      picker.firstElementChild.focus();
+    });
+    insertButton.setAttribute('aria-controls', picker.id);
+    insertButton.setAttribute('aria-expanded', 'false');
+    wrapper.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !picker.hidden) {
+        event.preventDefault();
+        closePicker();
+        insertButton.focus();
+      }
     });
     textarea.form.addEventListener('submit', () => { textarea.value = editor.getHTML(); });
   });
