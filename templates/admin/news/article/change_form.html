@@ -1,10 +1,70 @@
 {% extends "admin/change_form.html" %}
+
+{% block breadcrumbs %}
+  <div class="breadcrumbs"><a href="{% url 'admin:index' %}">Redaktionsübersicht</a> › <a href="{% url 'admin:news_article_changelist' %}">Artikel</a></div>
+{% endblock %}
+{% block content_title %}
+  <div class="editorial-page-head article-page-head">
+    <h1>{% if add %}Neuer Artikel{% else %}{{ original.title }}{% endif %}</h1>
+    <span class="editorial-status" data-status="{{ original.status|default:'draft' }}">{{ original.get_status_display|default:"Entwurf" }}</span>
+    {% if original.featured %}<span class="editorial-status">Aufmacher</span>{% endif %}
+    {% if editor_has_media %}<a href="#artikel-titelbild" class="mobile-photo-jump">Zum Titelbild</a>{% endif %}
+    {% if change and not is_popup %}
+      <ul class="object-tools">
+        <li><a href="{% url 'admin:news_article_history' original.pk %}">Verlauf</a></li>
+        {% if editor_public_article %}<li><a href="{% url 'article' original.slug %}">Öffentlichen Artikel ansehen</a></li>{% endif %}
+        {% if has_delete_permission %}<li><a href="{% url 'admin:news_article_delete' original.pk %}">Löschen</a></li>{% endif %}
+      </ul>
+    {% endif %}
+  </div>
+{% endblock %}
+{% block content_subtitle %}{% endblock %}
+{% block form_top %}
+  {% if has_change_permission or add %}
+    {% if original %}<input type="hidden" name="article_id" value="{{ original.pk }}">{% endif %}
+    {% if editor_has_media and not is_popup %}
+      <div hidden id="article-media-config"
+        data-library="{% if add %}{% url 'admin:news_article_add_media' %}{% else %}{% url 'admin:news_article_media' original.pk %}{% endif %}"
+        data-private-large="{% url 'private_media_variant' '00000000-0000-0000-0000-000000000000' 'large' %}"
+        data-max-bytes="{{ editor_upload_bytes }}" data-max-megapixels="{{ editor_upload_megapixels }}"
+        data-can-upload="{{ editor_may_upload|yesno:'true,false' }}"></div>
+    {% endif %}
+  {% endif %}
+{% endblock %}
+{% block field_sets %}
+  <div class="article-editor-grid">
+    {{ block.super }}
+  </div>
+{% endblock %}
+{% block object-tools %}{% endblock %}
 {% block submit_buttons_bottom %}
-{{ block.super }}
-{% if has_change_permission or add %}
-<div class="submit-row">
-  {% if original %}<input type="hidden" name="article_id" value="{{ original.pk }}">{% endif %}
-  <button type="submit" formaction="{% url 'article_preview' %}" formtarget="_blank" class="button">Ungespeicherte Vorschau öffnen</button>
-</div>
-{% endif %}
+  {% if is_popup %}
+    {{ block.super }}
+  {% elif has_change_permission or add %}
+    <div class="editorial-actions">
+      <div class="editorial-save-actions">
+        <button class="editorial-primary" type="submit" name="_continue" value="1"
+          {% if original.status == "published" %}data-confirm="Die Änderungen an diesem Artikel werden direkt auf der Zeitung sichtbar."{% endif %}>
+          {% if original.status == "published" %}Änderungen speichern{% else %}Entwurf speichern{% endif %}
+        </button>
+        <button type="submit" formaction="{% url 'article_preview' %}" formtarget="_blank">Vorschau</button>
+        {% if editor_may_publish and original.status != "published" %}
+          <button type="submit" name="_publish" value="1" data-confirm="Diesen Artikel mit den aktuellen Änderungen veröffentlichen?">Speichern und veröffentlichen</button>
+        {% endif %}
+        <span class="editorial-dirty" role="status"></span>
+      </div>
+      <div class="editorial-workflow">
+        {% if editor_may_publish and original.status == "published" %}
+          <button type="submit" name="editor_action" value="withdraw" formnovalidate formaction="{% url 'admin:news_article_status' original.pk %}"
+            data-confirm="Diesen Artikel zurückziehen? Er wird auf der Zeitung offline genommen." data-separate-action>Zurückziehen</button>
+          {% if editor_public_article and not original.featured %}
+            <button type="submit" name="editor_action" value="feature" formnovalidate formaction="{% url 'admin:news_article_status' original.pk %}"
+              data-confirm="Diesen Artikel als Aufmacher auf die Startseite setzen?" data-separate-action>Als Aufmacher setzen</button>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  {% else %}
+    {{ block.super }}
+  {% endif %}
 {% endblock %}

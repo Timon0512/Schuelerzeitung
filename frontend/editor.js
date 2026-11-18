@@ -1,10 +1,13 @@
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
+import { NodeSelection } from '@tiptap/pm/state';
+import { mountArticleMedia, mountCoverPicker } from './article-media.js';
+import { readCrop, writeCrop } from './crop-dialog.js';
 
 const InternalImage = Image.extend({
   addOptions() {
-    return { ...this.parent?.(), isAllowed: () => false };
+    return { ...this.parent?.(), isAllowed: () => false, showCrops: false };
   },
   addInputRules() {
     return [];
@@ -23,15 +26,46 @@ const InternalImage = Image.extend({
       default: null,
       parseHTML: element => element.getAttribute('data-media-id'),
       renderHTML: attrs => ({ 'data-media-id': attrs.mediaId }),
+    }, crop: {
+      default: null,
+      parseHTML: element => writeCrop(readCrop(element.getAttribute('data-crop'))),
+      renderHTML: attrs => attrs.crop ? { 'data-crop': attrs.crop } : {},
     }};
+  },
+  addNodeView() {
+    if (!this.options.showCrops) return this.parent?.();
+    return ({ node }) => {
+      const dom = document.createElement('div');
+      dom.className = 'editor-text-image';
+      const frame = document.createElement('div');
+      const image = document.createElement('img');
+      image.draggable = false;
+      frame.append(image);
+      dom.append(frame);
+      const update = current => {
+        if (current.type !== node.type) return false;
+        image.src = current.attrs.src;
+        image.alt = current.attrs.alt || '';
+        const crop = readCrop(current.attrs.crop);
+        frame.classList.toggle('is-cropped', Boolean(current.attrs.crop));
+        frame.style.setProperty('--text-edit-ratio', crop.ratio.replace('-', ' / '));
+        image.style.setProperty('--text-edit-position', crop.x + '% ' + crop.y + '%');
+        image.style.setProperty('--text-edit-zoom', crop.zoom / 100);
+        return true;
+      };
+      update(node);
+      return { dom, update };
+    };
   },
 });
 
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('textarea.kaktus-editor').forEach(textarea => {
-    // The cover image field already lists the media allowed for this article.
     const library = textarea.form.elements.namedItem('hero_image');
     const imageOptions = () => Array.from(library?.options ?? []).filter(option => option.value);
+    const config = textarea.form.querySelector('#article-media-config');
+    const media = config && library && mountArticleMedia(textarea.form, config, library);
+    if (media) mountCoverPicker(textarea.form, library, media);
     const wrapper = document.createElement('div');
     wrapper.className = 'editor-wrapper';
     const toolbar = document.createElement('div');
@@ -49,11 +83,14 @@ document.addEventListener('DOMContentLoaded', () => {
       element: surface,
       extensions: [
         StarterKit.configure({ heading: { levels: [2, 3] }, code: false, codeBlock: false, horizontalRule: false, strike: false, underline: false, link: { openOnClick: false, protocols: ['http', 'https', 'mailto'] } }),
-        InternalImage.configure({ isAllowed: id => imageOptions().some(option => option.value === id) }),
+        InternalImage.configure({ showCrops: Boolean(media), isAllowed: id => imageOptions().some(option => option.value === id) }),
       ],
       content: textarea.value,
       editorProps: { attributes: { role: 'textbox', 'aria-multiline': 'true', 'aria-label': 'Artikeltext' } },
-      onUpdate: ({ editor }) => { textarea.value = editor.getHTML(); },
+      onUpdate: ({ editor }) => {
+        textarea.value = editor.getHTML();
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      },
     });
     textarea.hidden = true;
     document.querySelector(`label[for="${textarea.id}"]`)?.addEventListener('click', event => { event.preventDefault(); editor.commands.focus(); });
@@ -80,6 +117,36 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (/^(https?:\/\/|mailto:)/i.test(href)) editor.chain().focus().extendMarkRange('link').setLink({ href }).run();
       else window.alert('Bitte eine vollständige sichere Linkadresse eingeben.');
     });
+    if (media) {
+      const insert = addButton('Bild einfügen', () => {
+        const { to } = editor.state.selection;
+        media.pick('Bild in den Artikeltext einfügen', item => {
+          editor.chain().focus().setTextSelection(to).setImage({
+            src: item.src, mediaId: item.id, alt: item.alt,
+          }).run();
+        });
+      });
+      insert.classList.add('editor-add-image');
+      const selection = () => {
+        const current = editor.state.selection;
+        return current instanceof NodeSelection && current.node.type.name === 'image' ? current : null;
+      };
+      const edit = addButton('Bildausschnitt', () => {
+        const current = selection();
+        if (!current) return;
+        const { crop, mediaId } = current.node.attrs;
+        media.editCrop(media.info(mediaId), readCrop(crop), false, result => {
+          editor.chain().setNodeSelection(current.from).updateAttributes('image', { crop: writeCrop(result) }).run();
+        });
+      });
+      const remove = addButton('Bild entfernen', () => {
+        if (selection()) editor.chain().focus().deleteSelection().run();
+      });
+      const syncActions = () => { edit.hidden = remove.hidden = !selection(); };
+      editor.on('selectionUpdate', syncActions);
+      syncActions();
+      return;
+    }
     const closePicker = () => {
       picker.hidden = true;
       insertButton.setAttribute('aria-expanded', 'false');

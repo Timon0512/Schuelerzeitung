@@ -9,7 +9,7 @@ from django.core.paginator import Paginator
 from django.test import RequestFactory, SimpleTestCase, override_settings
 from django.urls import resolve
 from news.models import Article, Author, Category, SiteSetting
-from news.public import public_render
+from news.public import article_context, public_render
 from news.seo import plain_description
 
 
@@ -28,7 +28,6 @@ class SEOTests(SimpleTestCase):
         return Article(
             title='Titel "mit Zitaten" </script><script>alert(1)</script>', slug="beispiel",
             category=Category(name="Schule", slug="schule"),
-            author=Author(pk=1, display_name="Privater Name", slug="privat", is_public=False),
             published_at=datetime(2026, 10, 1, tzinfo=timezone.utc),
             updated_at=datetime(2026, 10, 2, tzinfo=timezone.utc))
 
@@ -43,8 +42,9 @@ class SEOTests(SimpleTestCase):
 
     def test_article_json_is_valid_safe_and_hides_private_author(self):
         article = self.article()
-        html = self.render_page("/artikel/beispiel?utm_source=test", article=article,
-                                title=article.title, og_type="article", description="Ein Teaser.",
+        hidden = Author(pk=1, display_name="Privater Name", slug="privat")
+        html = self.render_page("/artikel/beispiel?utm_source=test",
+                                **article_context(article, images=[], authors=[hidden]),
                                 og_image="https://zeitung.example.invalid/medien/test").content.decode()
         data = self.structured(html)
         self.assertEqual(data["@type"], "NewsArticle")
@@ -59,11 +59,12 @@ class SEOTests(SimpleTestCase):
         self.assertNotIn("utm_source", html)
 
     def test_only_approved_author_is_named(self):
-        article = self.article()
-        article.author.is_public = True
-        data = self.structured(self.render_page("/artikel/beispiel", article=article).content.decode())
-        self.assertEqual(data["author"]["name"], article.author.display_name)
-        self.assertEqual(data["author"]["url"], "https://zeitung.example.invalid/autor/privat")
+        public = Author(pk=1, display_name="Öffentlicher Name", slug="anna", is_public=True)
+        data = self.structured(self.render_page(
+            "/artikel/beispiel", **article_context(self.article(), images=[], authors=[public])
+        ).content.decode())
+        self.assertEqual(data["author"]["name"], public.display_name)
+        self.assertEqual(data["author"]["url"], "https://zeitung.example.invalid/autor/anna")
 
     def test_preview_and_search_have_no_structured_or_social_metadata(self):
         for path in ("/redaktion/vorschau", "/suche?q=test"):

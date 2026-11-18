@@ -136,13 +136,13 @@ class InteractionTests(TestCase):
         submission.refresh_from_db()
         article=submission.article
         self.assertEqual(convert_submission(submission.pk,user=user).pk,article.pk)
-        self.assertIsNone(article.author_id)
+        self.assertFalse(article.authors.exists())
         author=Author.objects.create(display_name='Redaktion',slug='redaktion',is_public=True)
         image=submission.image
         image.alt_text='Ein Testbild'
         image.save()
         data={'title':'Geprüfter Beitrag','slug':article.slug,'category':self.category.pk,
-              'author':author.pk,'hero_image':str(image.pk),'body':'<p>Redigierter Text</p>','_save':'Speichern'}
+              'authors':[author.pk],'hero_image':str(image.pk),'body':'<p>Redigierter Text</p>','_save':'Speichern'}
         self.assertEqual(self.client.post(f'/admin/news/article/{article.pk}/change/',data).status_code,302)
         preview=self.client.post('/redaktion/vorschau',{**data,'article_id':article.pk})
         self.assertContains(preview,'Redigierter Text')
@@ -152,7 +152,7 @@ class InteractionTests(TestCase):
         self.assertContains(anonymous.get('/artikel/'+article.slug),'Geprüfter Beitrag')
         response=anonymous.get(f'/medien/{image.pk}')
         self.assertEqual(response.status_code,200)
-        response.close()
+        self.assertTrue(b"".join(response.streaming_content))
         withdraw_article(article.pk,user=user)
         self.assertEqual(anonymous.get('/artikel/'+article.slug).status_code,404)
         self.assertEqual(anonymous.get(f'/medien/{image.pk}').status_code,404)

@@ -1,1 +1,7 @@
-<p class="byline">{% if article.author and article.author.is_public %}Von {% if is_preview %}{{ article.author.display_name }}{% else %}<a href="{% url 'author' article.author.slug %}">{{ article.author.display_name }}</a>{% endif %}<span aria-hidden="true"> · </span>{% endif %}{% if article.published_at %}<time datetime="{{ article.published_at|date:'c' }}">{{ article.published_at|date:'j. F Y' }}</time>{% else %}Noch nicht veröffentlicht{% endif %}{% if reading_minutes %}<span aria-hidden="true"> · </span>{{ reading_minutes }} Min. Lesezeit{% endif %}</p>
+<p class="byline">
+  {% if public_article_authors %}
+    Von {% for author in public_article_authors %}{% if not forloop.first %}{% if forloop.last %} und {% else %}, {% endif %}{% endif %}{% if is_preview %}{{ author.display_name }}{% else %}<a href="{% url 'author' author.slug %}">{{ author.display_name }}</a>{% endif %}{% endfor %}<span aria-hidden="true"> · </span>
+  {% endif %}
+  {% if article.published_at %}<time datetime="{{ article.published_at|date:'c' }}">{{ article.published_at|date:'j. F Y' }}</time>{% else %}Noch nicht veröffentlicht{% endif %}
+  {% if reading_minutes %}<span aria-hidden="true"> · </span>{{ reading_minutes }} Min. Lesezeit{% endif %}
+</p>

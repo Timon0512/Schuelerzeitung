@@ -42,7 +42,9 @@ def article_preview(request):
     if not form.is_valid():
         return private_headers(public_render(request, "news/preview.html", {"errors": form.errors, "noindex": True, "title": "Vorschau prüfen"}, status=400))
     article = form.save(commit=False)
-    data = article_context(article, images=form.cleaned_data["text_images"], private=True)
+    data = article_context(
+        article, images=form.cleaned_data["text_images"], authors=form.cleaned_data["authors"], private=True
+    )
     return private_headers(public_render(request, "news/article.html", data))
 
 

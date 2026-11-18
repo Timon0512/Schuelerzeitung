@@ -26,10 +26,12 @@ class Command(BaseCommand):
             ("demo-geplant", "published", timezone.now() + timedelta(days=365)),
             ("demo-archiv", "archived", None),
         ]:
-            article, _ = Article.objects.get_or_create(slug=slug, defaults={
+            article, created = Article.objects.get_or_create(slug=slug, defaults={
                 "title": "DEMO – fiktiver Beispielbeitrag: " + slug, "category": category,
-                "author": author, "status": status, "published_at": date,
+                "status": status, "published_at": date,
                 "body": "<p>Fiktive Testdaten. Keine tatsächliche Schulnachricht.</p>"})
+            if created:
+                article.authors.add(author)
             if not article.hero_image_id:
                 article.hero_image = self.image(slug)
                 article.save()

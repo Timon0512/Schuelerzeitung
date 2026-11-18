@@ -12,7 +12,7 @@ from django.utils.html import strip_tags
 from django.views.decorators.http import require_safe
 
 from .content import clean_body
-from .models import Category
+from .models import Category, EditorialProfile
 from .selectors import public_articles, public_authors, resolve_article
 from .site_settings import get_site_settings
 from .seo import metadata, plain_description
@@ -85,7 +85,7 @@ def category(request, slug):
         "page_obj": paginate(request, public_articles().filter(category=rubric))})
 
 
-def article_context(article, *, images=None, private=False):
+def article_context(article, *, images=None, authors=None, private=False):
     captions = {}
     if images is None:
         placements = list(article.image_placements.select_related("media"))
@@ -93,7 +93,10 @@ def article_context(article, *, images=None, private=False):
         captions = {str(placement.media_id): placement.caption for placement in placements}
     elif article.pk and not article._state.adding:
         captions = {str(p.media_id): p.caption for p in article.image_placements.all()}
-    return {"article": article, "title": article.title, "description": plain_description(article.excerpt or article.body),
+    if authors is None:
+        authors = article.authors.order_by("display_name", "pk")
+    return {"article": article, "public_article_authors": [author for author in authors if author.is_public],
+            "title": article.title, "description": plain_description(article.excerpt or article.body),
             "article_body": clean_body(article.body, images, private=private, render=True, captions=captions),
             "reading_minutes": max(1, ceil(len(strip_tags(article.body).split()) / 200)),
             "is_preview": private, "noindex": private, "og_type": "article"}
@@ -123,8 +126,14 @@ def article_detail(request, slug):
 
 @require_safe
 def authors(request):
+    page = paginate(request, public_authors().order_by("display_name", "pk"))
+    profile = None
+    if page.number == 1:
+        profile = EditorialProfile.objects.select_related("photo").filter(
+            Q(photo__isnull=True) | Q(photo__submission__isnull=True, photo__submission_origin=False)
+        ).first()
     return public_render(request, "news/authors.html", {
-        "title": "Die Redaktion", "page_obj": paginate(request, public_authors().order_by("display_name", "pk"))})
+        "title": "Die Redaktion", "page_obj": page, "editorial_profile": profile})
 
 
 @require_safe
@@ -132,7 +141,7 @@ def author_detail(request, slug):
     author = get_object_or_404(public_authors(), slug=slug)
     return public_render(request, "news/list.html", {
         "title": author.display_name, "author": author,
-        "page_obj": paginate(request, public_articles().filter(author=author))})
+        "page_obj": paginate(request, public_articles().filter(authors=author))})
 
 
 @require_safe
@@ -143,7 +152,7 @@ def search(request):
         articles = public_articles().filter(
             Q(title__icontains=query) | Q(excerpt__icontains=query) | Q(body_text__icontains=query)
             | Q(category__name__icontains=query)
-            | Q(author__display_name__icontains=query, author__is_public=True))
+            | Q(authors__display_name__icontains=query, authors__is_public=True)).distinct()
     return public_render(request, "news/list.html", {
         "title": "Suche", "is_search": True, "query": query, "noindex": True,
         "page_obj": paginate(request, articles)})

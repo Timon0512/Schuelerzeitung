@@ -17,11 +17,13 @@ class PublicPageTests(TestCase):
         self.category = Category.objects.create(name="Schule", slug="schule")
         self.author = Author.objects.create(display_name="Öffentlicher Name", slug="autor", is_public=True)
         self.visible = Article.objects.create(title="Sichtbarer Beitrag", slug="sichtbar", category=self.category,
-            author=self.author, status="published", body="<p>Öffentlicher Text</p>")
+            status="published", body="<p>Öffentlicher Text</p>")
+        self.visible.authors.add(self.author)
         for slug, status, date in [("geheim", "draft", None), ("archiv", "archived", None),
                                     ("zukunft", "published", timezone.now()+timedelta(days=1))]:
-            Article.objects.create(title="VERBORGEN-"+slug, slug=slug, category=self.category,
-                                   author=self.author, status=status, published_at=date)
+            article = Article.objects.create(title="VERBORGEN-"+slug, slug=slug, category=self.category,
+                                             status=status, published_at=date)
+            article.authors.add(self.author)
 
     def test_visibility_across_all_public_surfaces(self):
         for url in ["/", "/artikel", "/rubrik/schule", "/autor/autor", "/suche?q=Beitrag", "/sitemap-articles.xml"]:
@@ -44,6 +46,20 @@ class PublicPageTests(TestCase):
         self.assertEqual(self.client.get('/autor/autor').status_code, 404)
         self.assertContains(self.client.get('/suche', {'q': self.author.display_name}), '0 Treffer')
 
+    def test_public_coauthors_are_linked_and_search_results_are_unique(self):
+        coauthor = Author.objects.create(display_name="Zweiter Name", slug="zweitautor", is_public=True)
+        hidden = Author.objects.create(display_name="Privater Name", slug="privat")
+        self.visible.authors.add(coauthor, hidden)
+        detail = self.client.get(reverse("article", args=[self.visible.slug]))
+        self.assertContains(detail, f'<a href="/autor/autor">{self.author.display_name}</a>')
+        self.assertContains(detail, f'<a href="/autor/zweitautor">{coauthor.display_name}</a>')
+        self.assertContains(detail, '"author": [{"@type": "Person"')
+        self.assertNotContains(detail, hidden.display_name)
+        self.assertContains(self.client.get(reverse("authors")), coauthor.display_name)
+        self.assertContains(self.client.get(reverse("author", args=[coauthor.slug])), self.visible.title)
+        self.assertContains(self.client.get(reverse("search"), {"q": "Name"}), "1 Treffer")
+        self.assertContains(self.client.get(reverse("search"), {"q": hidden.display_name}), "0 Treffer")
+
     def test_redirect_and_withdrawal_revoke_access(self):
         self.visible.slug = "neu"
         self.visible.save()
@@ -59,8 +75,9 @@ class PublicPageTests(TestCase):
 
     def test_search_pagination_and_related_category(self):
         for index in range(13):
-            Article.objects.create(title=f'Thema {index}', slug=f'thema-{index}', category=self.category,
-                                   author=self.author, status='published')
+            article = Article.objects.create(title=f'Thema {index}', slug=f'thema-{index}', category=self.category,
+                                             status='published')
+            article.authors.add(self.author)
         other = Category.objects.create(name='Andere Rubrik', slug='andere')
         Article.objects.create(title='Fremder Beitrag', slug='fremd', category=other, status='published')
         response = self.client.get('/suche', {'q':'Thema', 'page':2})
@@ -101,7 +118,7 @@ class PublicPageTests(TestCase):
             response = self.client.get('/zeitungslogo')
             self.assertEqual(response.status_code, 200)
             self.assertIn('no-store', response['Cache-Control'])
-            response.close()
+            self.assertTrue(b"".join(response.streaming_content))
             Submission.objects.create(name='Privat', class_level='7', title='Privat', category=self.category, body='Text', image=media)
             self.assertEqual(self.client.get('/zeitungslogo').status_code, 404)
             setting.logo = None

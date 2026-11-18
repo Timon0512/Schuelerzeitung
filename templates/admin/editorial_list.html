@@ -1,0 +1,33 @@
+{% extends "admin/change_list.html" %}
+{% load admin_list admin_urls %}
+
+{% block bodyclass %}{{ block.super }} editorial-list{% endblock %}
+{% block breadcrumbs %}
+  <div class="breadcrumbs"><a href="{% url 'admin:index' %}">Redaktionsübersicht</a> › {{ title }}</div>
+{% endblock %}
+{% block object-tools-items %}
+  {% if has_add_permission %}
+    <li><a class="button editorial-primary" href="{% url cl.opts|admin_urlname:'add' %}{{ cl.add_url_params }}">{% if cl.opts.model_name == "article" %}Neuer Artikel{% else %}Foto hochladen{% endif %}</a></li>
+  {% endif %}
+{% endblock %}
+{% block search %}
+  <div class="editorial-list-controls">
+    {% search_form cl %}
+    {% if cl.has_filters %}
+      <div class="editorial-filters" role="group" aria-label="Ergebnisse filtern">
+        {% for spec in cl.filter_specs %}{% admin_list_filter cl spec %}{% endfor %}
+        {% if cl.has_active_filters %}<a class="filter-clear" href="{{ cl.clear_all_filters_qs }}">Filter zurücksetzen</a>{% endif %}
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}
+{% block filters %}{% endblock %}
+{% block result_list %}
+  {% if cl.result_count %}
+    {{ block.super }}
+  {% elif cl.query or cl.has_active_filters %}
+    <p class="editorial-empty">Kein Treffer. Ändere die Suche oder setze die Filter zurück.</p>
+  {% else %}
+    <p class="editorial-empty">{% if cl.opts.model_name == "submission" %}Es liegen noch keine Einsendungen vor.{% elif cl.opts.model_name == "article" %}Hier erscheinen deine Artikel und Entwürfe.{% else %}Hier erscheinen die hochgeladenen Fotos.{% endif %}</p>
+  {% endif %}
+{% endblock %}

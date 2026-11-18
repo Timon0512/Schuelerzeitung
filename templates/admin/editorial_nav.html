@@ -1,0 +1,28 @@
+<nav id="editorial-nav" aria-label="Redaktionsmenü">
+  <a class="editorial-nav-link" href="{% url 'admin:index' %}"{% if request.resolver_match.url_name == "index" %} aria-current="page"{% endif %}>Übersicht</a>
+  {% for model_name in editorial_navigation %}
+    {% for app in available_apps %}
+      {% for model in app.models %}
+        {% if model.object_name == model_name %}
+          {% firstof model.admin_url model.add_url as target %}
+          {% if target %}
+            <a class="editorial-nav-link" href="{{ target }}"{% if target in request.path %} aria-current="page"{% endif %}>
+              {{ model.name }}{% if model.object_name == "Submission" and unread_submission_count %}<span class="submission-count" aria-label="{{ unread_submission_count }} neue Einsendungen">{{ unread_submission_count }}</span>{% endif %}
+            </a>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+  {% endfor %}
+  <details class="editorial-nav-settings"{% if opts.model_name and opts.model_name != "article" and opts.model_name != "submission" and opts.model_name != "media" %} open{% endif %}>
+    <summary>Verwaltung</summary>
+    {% for app in available_apps %}
+      {% for model in app.models %}
+        {% if model.object_name not in editorial_navigation %}
+          {% firstof model.admin_url model.add_url as target %}
+          {% if target %}<a class="editorial-nav-link" href="{{ target }}"{% if target in request.path %} aria-current="page"{% endif %}>{{ model.name }}</a>{% endif %}
+        {% endif %}
+      {% endfor %}
+    {% endfor %}
+  </details>
+</nav>

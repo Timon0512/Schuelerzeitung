@@ -1,4 +1,20 @@
 {% extends "admin/base.html" %}{% load static %}
-{% block title %}{{ title }} | {{ publication_name }} Redaktion{% endblock %}
-{% block branding %}<div id="site-name"><a href="{% url 'admin:index' %}">{{ publication_name }} Redaktion</a></div>{% endblock %}
-{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'news/admin.css' %}">{% endblock %}
+{% block title %}{{ title }} | {{ publication_name }} – Redaktion{% endblock %}
+{% block dark-mode-vars %}{% endblock %}
+{% block nav-sidebar %}
+  {% if has_permission %}{% include "admin/editorial_nav.html" %}{% endif %}
+{% endblock %}
+{% block branding %}
+  <div id="site-name"><a href="{% url 'admin:index' %}" aria-label="{{ publication_name }} Redaktion">{{ publication_name }}</a><span aria-hidden="true">Redaktion</span></div>
+  {% if has_permission %}<button type="button" id="editorial-menu" aria-controls="editorial-nav" aria-expanded="false" hidden>Menü</button>{% endif %}
+{% endblock %}
+{% block welcome-msg %}
+  <strong class="editorial-user">{% firstof user.get_short_name user.get_username %}</strong>
+{% endblock %}
+{% block userlinks %}
+  <a href="{% url 'home' %}">Zur Zeitung</a>
+  {% if user.has_usable_password %}<a href="{% url 'admin:password_change' %}">Passwort</a>{% endif %}
+  <form id="logout-form" action="{% url 'admin:logout' %}" method="post">{% csrf_token %}<button type="submit">Abmelden</button></form>
+{% endblock %}
+{% block responsive %}{{ block.super }}<link rel="stylesheet" href="{% static 'news/admin.css' %}">{% endblock %}
+{% block extrahead %}{{ block.super }}<script src="{% static 'news/admin.js' %}" defer></script>{% endblock %}
