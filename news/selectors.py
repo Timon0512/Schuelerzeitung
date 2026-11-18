@@ -2,7 +2,7 @@ from .models import Article, Author, SlugRedirect
 
 
 def public_articles():
-    return Article.objects.public().select_related("category", "author", "hero_image")
+    return Article.objects.public().select_related("category", "hero_image")
 
 
 def public_authors():
@@ -10,7 +10,7 @@ def public_authors():
 
 
 def articles_by_author(slug):
-    return public_articles().filter(author__slug=slug, author__is_public=True)
+    return public_articles().filter(authors__slug=slug, authors__is_public=True)
 
 
 def resolve_article(slug):

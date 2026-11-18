@@ -90,7 +90,7 @@ Wortmarke Desktop 80–96 px, mobil 40–48 px; H1 Desktop 44–56 px, mobil 32�
 - Unter 1024 px Hauptnavigation über Menübutton; Suche separat erreichbar. Geöffnetes Menü mit Fokusführung, Escape und Schließen-Aktion.
 - Artikelspalte maximal 760 px beziehungsweise 68ch; Titelbilder bis 960 px. Textbilder mobil als eigener Block, keine schmale Resttextspalte.
 - Formular Desktop Haupt- und Erklärungsspalte, unter 768 px einspaltig. Erklärung nach dem Absenden-Button. Keine Kontaktfelder hinzufügen.
-- Admin-Seitenleiste 200–220 px; Editor rechts mit Aktionsspalte. Bei Platzmangel Aktionen in den Seitenfluss übernehmen; Tabellenaktionen müssen erreichbar bleiben.
+- Admin-Seitenleiste 200–220 px, darunter ein aufklappbares Menü auf schmalen Bildschirmen. Der Editor gruppiert Text und Metadaten nebeneinander und führt sie mobil einspaltig. Vorschau und Speichern bleiben in der Aktionsleiste erreichbar.
 
 ## Elevation & Depth
 
@@ -105,7 +105,7 @@ Fotos mit geraden Kanten, Formulare mit 4 px Radius. Bildverhältnisse reservier
 - Suche erhält Suchbegriff, Trefferzahl, Pagination und hilfreichen Nulltrefferzustand.
 - Einreichung: permanente Labels, Fehlerübersicht und Feldfehler, Eingaben erhalten, Sendezustand und Empfangsbestätigung. Hinweis: „Wir lesen deinen Beitrag und prüfen ihn vor der Veröffentlichung.“ Keine Kontaktzusage ohne Kontaktfeld.
 - Herz: ungesetzt, gesetzt, läuft und Fehler; serverbestätigte Änderung beziehungsweise Rücknahme bei Fehler. Zugänglicher Name und Zustand.
-- Admin: Klartextstatus, Entwurf speichern, geschützte Vorschau und berechtigungsabhängige Veröffentlichung. Keine automatische Übernahme privater Autorendaten.
+- Admin: Die Übersicht zeigt Entwürfe und neue Einsendungen. Klartextstatus und berechtigungsabhängige Aktionen stehen am Artikel. Bildauswahl und Upload öffnen denselben Dialog. Das Raster für den Ausschnitt zeigt den tatsächlich sichtbaren Bildbereich. Private Autorendaten bleiben in der Einsendung.
 - Verwandte Artikel tatsächlich aus der angegebenen Rubrik. Rangliste nach Herzen der letzten sieben Tage; Periodenwert klar von Gesamtherzen am Artikel unterscheiden.
 
 ## Do's and Don'ts

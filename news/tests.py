@@ -27,7 +27,9 @@ class ContentTests(TestCase):
         self.publisher.groups.add(Group.objects.get(name="Veröffentlichung"))
 
     def article(self, slug="test", **kwargs):
-        return Article.objects.create(title=slug, slug=slug, category=self.category, author=self.author, **kwargs)
+        article = Article.objects.create(title=slug, slug=slug, category=self.category, **kwargs)
+        article.authors.add(self.author)
+        return article
 
     def image(self):
         return Media.objects.create(file="images/test.png", alt_text="Test", width=1, height=1, size=1, mime_type="image/png")
@@ -136,7 +138,7 @@ class ContentTests(TestCase):
             response = self.client.get(f"/medien/{article.hero_image_id}")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response["Cache-Control"], "private, no-store")
-            response.close()
+            self.assertTrue(b"".join(response.streaming_content))
             withdraw_article(article.pk, user=self.publisher)
             self.assertEqual(self.client.get(f"/medien/{article.hero_image_id}").status_code, 404)
 

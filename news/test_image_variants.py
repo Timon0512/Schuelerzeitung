@@ -32,7 +32,9 @@ class ImageWorkflowTests(TestCase):
         return Media.objects.create(file=upload((800, 600)), alt_text="Foto", uploaded_by=self.user)
 
     def article(self, image):
-        return Article.objects.create(title="Artikel", slug="artikel", category=self.category, author=self.author, hero_image=image)
+        article = Article.objects.create(title="Artikel", slug="artikel", category=self.category, hero_image=image)
+        article.authors.add(self.author)
+        return article
 
     def test_variants_follow_visibility_and_private_permissions(self):
         image = self.image()
@@ -45,13 +47,13 @@ class ImageWorkflowTests(TestCase):
         response = self.client.get(private)
         self.assertEqual(response.status_code, 200)
         self.assertIn("no-store", response["Cache-Control"])
-        response.close()
+        self.assertTrue(b"".join(response.streaming_content))
         article.status = "published"
         article.save()
         response = self.client.get(public)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "image/webp")
-        response.close()
+        self.assertTrue(b"".join(response.streaming_content))
         article.status = "draft"
         article.save()
         self.assertEqual(self.client.get(public).status_code, 404)
@@ -105,7 +107,7 @@ class ImageWorkflowTests(TestCase):
         image = self.image()
         article = self.article(image)
         data = {"title": article.title, "slug": article.slug, "category": self.category.pk,
-                "author": self.author.pk, "hero_image": image.pk, "hero_focus_image": str(image.pk),
+                "authors": [self.author.pk], "hero_image": image.pk, "hero_focus_image": str(image.pk),
                 "hero_focus_x": 20, "hero_focus_y": 80, "body": "<p>Text</p>"}
         form = ArticleForm(data, instance=article, user=self.user)
         self.assertTrue(form.is_valid(), form.errors)

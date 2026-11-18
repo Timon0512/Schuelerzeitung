@@ -1,6 +1,7 @@
 from django import forms
 from .content import body_image_ids, clean_body
-from .models import Article, Media, SlugRedirect
+from .crops import MAX_ZOOM, MIN_ZOOM
+from .models import Article, Author, EditorialProfile, Media, SlugRedirect
 from .services import selectable_media
 from .uploads import decode_image
 
@@ -13,22 +14,36 @@ class EditorWidget(forms.Textarea):
 
 class ArticleForm(forms.ModelForm):
     hero_focus_image = forms.CharField(required=False, widget=forms.HiddenInput)
+    authors = forms.ModelMultipleChoiceField(
+        label="Autorendarstellungen",
+        queryset=Author.objects.order_by("display_name", "pk"),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        help_text="Wähle alle Beteiligten aus. Auf der Website erscheinen nur öffentlich freigegebene Namen.",
+    )
 
     class Meta:
         model = Article
-        fields = ["title", "slug", "excerpt", "category", "author", "hero_image", "hero_focus_x", "hero_focus_y", "hero_focus_image", "body"]
+        fields = [
+            "title", "slug", "excerpt", "category", "authors", "hero_image", "hero_focus_x",
+            "hero_focus_y", "hero_zoom", "hero_focus_image", "body",
+        ]
         widgets = {"body": EditorWidget(attrs={"class": "kaktus-editor"})}
-        labels = {"slug": "Artikeladresse", "author": "Autorendarstellung", "hero_image": "Titelbild"}
+        labels = {"slug": "Artikeladresse", "hero_image": "Titelbild"}
 
-    def __init__(self, *args, user=None, **kwargs):
+    def __init__(self, *args, user=None, publishing=False, **kwargs):
         super().__init__(*args, **kwargs)
-        self.user = user
+        self.publishing = publishing
+        if "hero_image" not in self.fields:
+            return
         self.initial["hero_focus_image"] = str(self.instance.hero_image_id or "")
         for name in ("hero_focus_x", "hero_focus_y"):
             self.fields[name].required = False
             self.fields[name].widget.attrs.update({"min": 0, "max": 100, "step": 1})
         self.fields["hero_focus_x"].help_text = "0 = links, 100 = rechts. Ohne JavaScript wird ein neues Titelbild zunächst zentriert; danach speichern und den Fokus einstellen."
         self.fields["hero_focus_y"].help_text = "0 = oben, 100 = unten."
+        self.fields["hero_zoom"].required = False
+        self.fields["hero_zoom"].widget.attrs.update({"min": MIN_ZOOM, "max": MAX_ZOOM, "step": 1})
         self.fields["hero_image"].queryset = selectable_media(user, self.instance)
 
     def clean_slug(self):
@@ -43,23 +58,43 @@ class ArticleForm(forms.ModelForm):
         for name in ("hero_focus_x", "hero_focus_y"):
             if name not in self.errors and (data.get(name) is None or selected != data.get("hero_focus_image", "")):
                 data[name] = 50
+        if "hero_zoom" not in self.errors and (
+            not selected or data.get("hero_zoom") is None or selected != data.get("hero_focus_image", "")
+        ):
+            data["hero_zoom"] = MIN_ZOOM
         body = data.get("body", "")
         image_ids = body_image_ids(body)
         allowed = self.fields["hero_image"].queryset.in_bulk(image_ids)
         images = [allowed[pk] for pk in image_ids if pk in allowed]
         data["text_images"] = images
         data["body"] = clean_body(body, images)
-        if self.instance.status == "published":
-            if not data.get("author"):
-                self.add_error("author", "Bitte eine Autorendarstellung auswählen.")
+        if self.publishing or self.instance.status == "published":
+            if "authors" in data and not data["authors"]:
+                self.add_error("authors", "Bitte mindestens eine Autorendarstellung auswählen.")
             all_images = images + ([data["hero_image"]] if data.get("hero_image") else [])
             if any(not image.alt_text.strip() for image in all_images):
                 self.add_error("body", "Alle Bilder benötigen einen Alternativtext.")
         return data
 
-    class Media:
-        js = ["news/image-focus.js"]
-        css = {"all": ["news/image-focus.css"]}
+
+class EditorialProfileForm(forms.ModelForm):
+    class Meta:
+        model = EditorialProfile
+        fields = ["intro", "photo"]
+        help_texts = {
+            "intro": "Text und Foto erscheinen nach dem Speichern auf der öffentlichen Seite „Die Redaktion“.",
+            "photo": "Wähle ein freigegebenes Foto aus „Bilder“ aus.",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["photo"].queryset = Media.objects.for_editorial_profile().order_by("-created_at", "pk")
+
+    def clean_photo(self):
+        photo = self.cleaned_data["photo"]
+        if photo and not photo.alt_text.strip():
+            raise forms.ValidationError("Das Redaktionsfoto benötigt einen Alternativtext.")
+        return photo
 
 
 class MediaForm(forms.ModelForm):

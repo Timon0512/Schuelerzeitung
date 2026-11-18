@@ -11,7 +11,9 @@ def ensure_roles(sender=None, using="default", **kwargs):
     }
     permissions = list(Permission.objects.using(using).select_related("content_type"))
     editorial = [p for p in permissions if p.codename in allowed.get(p.content_type.app_label, set())]
+    publication = [p for p in permissions if p.content_type.app_label == "news" and p.codename in {
+        "can_publish_article", "view_editorialprofile", "add_editorialprofile", "change_editorialprofile",
+    }]
     for name, publish in (("Redaktion", False), ("Veröffentlichung", True)):
         group, _ = Group.objects.using(using).get_or_create(name=name)
-        group.permissions.set(editorial + ([p for p in permissions if p.content_type.app_label == "news"
-                                           and p.codename == "can_publish_article"] if publish else []))
+        group.permissions.set(editorial + (publication if publish else []))

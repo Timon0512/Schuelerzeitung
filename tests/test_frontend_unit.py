@@ -10,7 +10,7 @@ from news.models import SiteSetting
 class FrontendUnitTests(SimpleTestCase):
     def test_templates_and_unavailable_interactions(self):
         pages, _ = fixtures()
-        self.assertEqual(len(pages), 24)
+        self.assertEqual(len(pages), 25)
         self.assertIn('<fieldset disabled', pages['submission-disabled'])
         self.assertIn('keine Daten versendet', pages['submission-disabled'])
         self.assertIn('Erhaltene Eingabe', pages['submission-error'])

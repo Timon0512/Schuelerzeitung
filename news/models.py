@@ -3,11 +3,12 @@ from pathlib import Path
 from .content import clean_body
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator, MaxValueValidator
+from django.core.validators import RegexValidator, MaxValueValidator, MinValueValidator
 from django.db import models, transaction, connection
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.html import strip_tags
+from .crops import MAX_ZOOM, MIN_ZOOM
 
 
 def public_article_q(prefix="", at=None):
@@ -62,8 +63,14 @@ def media_path(instance, filename):
 
 
 class MediaQuerySet(models.QuerySet):
+    def for_editorial_profile(self):
+        return self.filter(submission__isnull=True, submission_origin=False)
+
     def public(self):
-        return self.filter(public_article_q("hero_articles__") | public_article_q("placements__article__")).distinct()
+        profile_photo = self.for_editorial_profile().filter(editorial_profiles__pk=1)
+        return self.filter(
+            public_article_q("hero_articles__") | public_article_q("placements__article__") | Q(pk__in=profile_photo)
+        ).distinct()
 
 
 class Media(models.Model):
@@ -127,10 +134,15 @@ class Article(models.Model):
     body = models.TextField("Artikeltext", blank=True)
     body_text = models.TextField(editable=False, blank=True)
     category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name="Rubrik")
-    author = models.ForeignKey(Author, null=True, blank=True, on_delete=models.PROTECT, related_name="articles")
+    authors = models.ManyToManyField(
+        Author, through="ArticleAuthor", related_name="articles", blank=True, verbose_name="Autorendarstellungen"
+    )
     hero_image = models.ForeignKey(Media, null=True, blank=True, on_delete=models.PROTECT, related_name="hero_articles")
     hero_focus_x = models.PositiveSmallIntegerField("Bildfokus horizontal (%)", default=50, validators=[MaxValueValidator(100)])
     hero_focus_y = models.PositiveSmallIntegerField("Bildfokus vertikal (%)", default=50, validators=[MaxValueValidator(100)])
+    hero_zoom = models.PositiveSmallIntegerField(
+        "Zoom (%)", default=MIN_ZOOM, validators=[MinValueValidator(MIN_ZOOM), MaxValueValidator(MAX_ZOOM)]
+    )
     status = models.CharField("Status", max_length=12, choices=Status, default=Status.DRAFT)
     published_at = models.DateTimeField("Veröffentlichungsdatum", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -148,6 +160,7 @@ class Article(models.Model):
         indexes = [models.Index(fields=["status", "-published_at"])]
         constraints = [
             models.CheckConstraint(condition=Q(hero_focus_x__lte=100, hero_focus_y__lte=100), name="article_focus_bounds"),
+            models.CheckConstraint(condition=Q(hero_zoom__range=(MIN_ZOOM, MAX_ZOOM)), name="article_zoom_bounds"),
             models.CheckConstraint(condition=Q(status__in=["draft", "published", "archived"]), name="article_valid_status"),
             models.CheckConstraint(condition=~Q(status="published") | Q(published_at__isnull=False), name="published_has_date"),
             models.CheckConstraint(condition=Q(featured=False) | Q(status="published"), name="featured_is_published"),
@@ -185,6 +198,14 @@ class Article(models.Model):
         return self.title
 
 
+class ArticleAuthor(models.Model):
+    article = models.ForeignKey(Article, on_delete=models.CASCADE)
+    author = models.ForeignKey(Author, on_delete=models.PROTECT)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["article", "author"], name="unique_article_author")]
+
+
 class ArticleMedia(models.Model):
     article = models.ForeignKey(Article, on_delete=models.CASCADE, related_name="image_placements")
     media = models.ForeignKey(Media, on_delete=models.PROTECT, related_name="placements")
@@ -219,3 +240,19 @@ class SiteSetting(models.Model):
         verbose_name = "Zeitungseinstellung"
         verbose_name_plural = "Zeitungseinstellungen"
         constraints = [models.CheckConstraint(condition=Q(id=1), name="single_site_setting")]
+
+
+class EditorialProfile(models.Model):
+    id = models.PositiveSmallIntegerField(primary_key=True, default=1, editable=False)
+    intro = models.TextField("Vorstellungstext", blank=True, max_length=3000)
+    photo = models.ForeignKey(
+        Media, null=True, blank=True, on_delete=models.PROTECT, related_name="editorial_profiles",
+        verbose_name="Redaktionsfoto",
+    )
+
+    class Meta:
+        verbose_name = verbose_name_plural = "Redaktionsvorstellung"
+        constraints = [models.CheckConstraint(condition=Q(id=1), name="single_editorial_profile")]
+
+    def __str__(self):
+        return "Die Redaktion"

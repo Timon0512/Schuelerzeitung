@@ -70,9 +70,13 @@ def metadata(request, data):
         for field, value in (("datePublished", article.published_at), ("dateModified", article.updated_at)):
             if value:
                 structured[field] = value.isoformat()
-        if article.author_id and article.author.is_public:
-            structured["author"] = {"@type": "Person", "name": article.author.display_name,
-                                    "url": request.build_absolute_uri(reverse("author", args=[article.author.slug]))}
+        credits = [
+            {"@type": "Person", "name": author.display_name,
+             "url": request.build_absolute_uri(reverse("author", args=[author.slug]))}
+            for author in data.get("public_article_authors", ())
+        ]
+        if credits:
+            structured["author"] = credits[0] if len(credits) == 1 else credits
         if data.get("og_image"):
             structured["image"] = [data["og_image"]]
     if structured:

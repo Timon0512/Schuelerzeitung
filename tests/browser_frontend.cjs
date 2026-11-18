@@ -9,7 +9,7 @@ const assert = require('node:assert/strict');
   const errors = [], external = [];
   const fixtures = '.qa/frontend';
   const names = fs.readdirSync(fixtures).filter(name => name.endsWith('.html'));
-  const captures = new Set(['home','article','submission-disabled','long-title','search','submission-error']);
+  const captures = new Set(['home','article','editorial-profile','submission-disabled','long-title','search','submission-error']);
   try {
     for (const width of [360, 768, 1440]) {
       const context = await browser.newContext({ viewport: { width, height: 1000 } });

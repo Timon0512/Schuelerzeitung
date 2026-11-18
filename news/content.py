@@ -3,11 +3,12 @@ from html import escape
 from html.parser import HTMLParser
 from uuid import UUID
 import nh3
+from .crops import TEXT_RATIOS, crop_style, text_crop
 
 
 def sanitize_body(value):
     return nh3.clean(value, tags={"p", "h2", "h3", "strong", "em", "ul", "ol", "li", "blockquote", "a", "br", "img"},
-                     attributes={"a": {"href", "title"}, "img": {"data-media-id"}},
+                     attributes={"a": {"href", "title"}, "img": {"data-media-id", "data-crop"}},
                      url_schemes={"http", "https", "mailto"})
 
 
@@ -42,8 +43,10 @@ def clean_body(value, images=(), *, private=False, render=False, captions=None):
             if tag != "img":
                 self.output.append(self.get_starttag_text())
                 return
-            image = allowed.get(dict(attrs).get("data-media-id"))
+            image_attrs = dict(attrs)
+            image = allowed.get(image_attrs.get("data-media-id"))
             if image:
+                crop = text_crop(image_attrs.get("data-crop"))
                 route = "/redaktion/medien/" if private else "/medien/"
                 tag = f'<img data-media-id="{image.pk}" src="{route}{image.pk}" alt="{escape(image.alt_text, quote=True)}">'
                 if render:
@@ -55,6 +58,12 @@ def clean_body(value, images=(), *, private=False, render=False, captions=None):
                     # Inline-safe wrapper: editor images may be inside a paragraph.
                     dimensions = f' width="{image.width}" height="{image.height}" loading="lazy"'
                     tag = tag[:-1] + dimensions + ">"
+                if crop:
+                    ratio, x, y, zoom = crop
+                    tag = tag[:-1] + f' data-crop="{ratio}/{x}/{y}/{zoom}">'
+                    if render:
+                        ratio_value = TEXT_RATIOS[ratio] or f"{image.width} / {image.height}"
+                        tag = f'<span class="text-crop" style="{crop_style(x, y, zoom)};--crop-ratio:{ratio_value}">{tag}</span>'
                 caption = (captions or {}).get(str(image.pk)) or image.caption
                 if (private or render) and caption:
                     tag = f'<span class="text-image">{tag}<span class="caption">{escape(caption)}</span></span>'

@@ -20,7 +20,7 @@ def selectable_media(user, article=None):
 
 
 @transaction.atomic
-def save_editorial(article, *, user, images):
+def save_editorial(article, *, user, images, authors):
     require_editor(user)
     content_lock()
     previous = Article.objects.filter(pk=article.pk).first() if article.pk else None
@@ -39,7 +39,7 @@ def save_editorial(article, *, user, images):
     if set(selectable_media(user, previous).filter(pk__in=ids).values_list("pk", flat=True)) != ids:
         raise ValidationError("Ein Bild ist für diesen Artikel nicht freigegeben.")
     if article.status == Article.Status.PUBLISHED:
-        if not article.author_id or any(not image.alt_text.strip() for image in Media.objects.filter(pk__in=ids)):
+        if not authors or any(not image.alt_text.strip() for image in Media.objects.filter(pk__in=ids)):
             raise ValidationError("Autorendarstellung und Alternativtexte sind erforderlich.")
     article.editor = user
     article._allowed_images = images
@@ -60,8 +60,8 @@ def publish_article(article_id, *, user):
     require_publisher(user)
     content_lock()
     article = Article.objects.select_for_update().get(pk=article_id)
-    if not article.author_id:
-        raise ValidationError("Vor der Veröffentlichung eine Autorendarstellung festlegen.")
+    if not article.authors.exists():
+        raise ValidationError("Vor der Veröffentlichung mindestens eine Autorendarstellung festlegen.")
     images = Media.objects.filter(pk=article.hero_image_id) | article.images.all()
     if any(not image.alt_text.strip() for image in images):
         raise ValidationError("Alle Artikelbilder benötigen einen Alternativtext.")
