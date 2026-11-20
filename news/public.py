@@ -13,7 +13,7 @@ from django.views.decorators.http import require_safe
 
 from .content import clean_body
 from .models import Category, EditorialProfile
-from .selectors import public_articles, public_authors, resolve_article
+from .selectors import public_articles, public_articles_with_authors, public_authors, resolve_article
 from .site_settings import get_site_settings
 from .seo import metadata, plain_description
 
@@ -53,13 +53,13 @@ def paginate(request, articles):
 
 @require_safe
 def home(request):
-    articles = public_articles()
+    articles = public_articles_with_authors()
     lead = articles.lead()
     remaining = articles.exclude(pk=lead.pk) if lead else articles
     side = list(remaining[:2])
     latest = remaining.exclude(pk__in=[item.pk for item in side])[:6]
     now = timezone.now()
-    popular = articles.annotate(week_hearts=Count("reactions", filter=Q(
+    popular = public_articles().annotate(week_hearts=Count("reactions", filter=Q(
         reactions__created_at__gte=now - timedelta(days=7),
         reactions__created_at__lte=now))).filter(week_hearts__gt=0).order_by(
             "-week_hearts", "-published_at", "-pk")[:5]
@@ -74,7 +74,7 @@ def home(request):
 @require_safe
 def article_list(request):
     return public_render(request, "news/list.html", {
-        "title": "Alle Artikel", "page_obj": paginate(request, public_articles())})
+        "title": "Alle Artikel", "page_obj": paginate(request, public_articles_with_authors())})
 
 
 @require_safe
@@ -82,7 +82,7 @@ def category(request, slug):
     rubric = get_object_or_404(Category, slug=slug, is_active=True)
     return public_render(request, "news/list.html", {
         "title": rubric.name, "category": rubric,
-        "page_obj": paginate(request, public_articles().filter(category=rubric))})
+        "page_obj": paginate(request, public_articles_with_authors().filter(category=rubric))})
 
 
 def article_context(article, *, images=None, authors=None, private=False):
@@ -113,7 +113,7 @@ def article_detail(request, slug):
         response["Cache-Control"] = "private, no-store"
         return response
     data = article_context(article)
-    data["related"] = public_articles().filter(category_id=article.category_id).exclude(pk=article.pk)[:3]
+    data["related"] = public_articles_with_authors().filter(category_id=article.category_id).exclude(pk=article.pk)[:3]
     data["heart_count"] = article.reactions.count()
     from reactions.services import visitor_token, token_hash, ensure_cookie
     token = visitor_token(request)
@@ -141,18 +141,20 @@ def author_detail(request, slug):
     author = get_object_or_404(public_authors(), slug=slug)
     return public_render(request, "news/list.html", {
         "title": author.display_name, "author": author,
-        "page_obj": paginate(request, public_articles().filter(authors=author))})
+        "page_obj": paginate(request, public_articles_with_authors().filter(authors=author))})
 
 
 @require_safe
 def search(request):
     query = request.GET.get("q", "").strip()[:200]
-    articles = public_articles().none()
+    articles = public_articles_with_authors()
     if query:
-        articles = public_articles().filter(
+        articles = articles.filter(
             Q(title__icontains=query) | Q(excerpt__icontains=query) | Q(body_text__icontains=query)
             | Q(category__name__icontains=query)
             | Q(authors__display_name__icontains=query, authors__is_public=True)).distinct()
+    else:
+        articles = articles.none()
     return public_render(request, "news/list.html", {
         "title": "Suche", "is_search": True, "query": query, "noindex": True,
         "page_obj": paginate(request, articles)})

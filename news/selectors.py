@@ -1,8 +1,15 @@
+from django.db.models import Prefetch
+
 from .models import Article, Author, SlugRedirect
 
 
 def public_articles():
     return Article.objects.public().select_related("category", "hero_image")
+
+
+def public_articles_with_authors():
+    authors = Author.objects.filter(is_public=True).order_by("display_name", "pk")
+    return public_articles().prefetch_related(Prefetch("authors", queryset=authors, to_attr="public_authors"))
 
 
 def public_authors():
