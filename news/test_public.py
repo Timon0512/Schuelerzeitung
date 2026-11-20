@@ -1,6 +1,7 @@
 """Integration coverage; only run via the guarded PostgreSQL test runner."""
 from datetime import timedelta
 from io import BytesIO
+from re import findall
 from PIL import Image
 from tempfile import TemporaryDirectory
 from django.test import TestCase, override_settings
@@ -88,6 +89,39 @@ class PublicPageTests(TestCase):
         empty = Category.objects.create(name='Leer', slug='leer')
         self.assertContains(self.client.get('/rubrik/'+empty.slug), 'noch keine Artikel')
         self.assertContains(self.client.get('/suche?q=unauffindbar'), 'Keine passenden Artikel')
+
+    def test_related_cards_show_their_own_public_authors(self):
+        first = Author.objects.create(display_name="Anna Beispiel", slug="anna", is_public=True)
+        second = Author.objects.create(display_name="Zoe Beispiel", slug="zoe", is_public=True)
+        private = Author.objects.create(display_name="Privater Name", slug="privat")
+        cards = [
+            ("Beitrag im Team", "team", [second, private, first], [first, second]),
+            ("Beitrag mit privatem Autor", "privat", [private], []),
+            ("Beitrag ohne Autor", "ohne-autor", [], []),
+        ]
+        for title, slug, authors, _ in cards:
+            article = Article.objects.create(title=title, slug=slug, category=self.category, status="published")
+            article.authors.add(*authors)
+
+        detail = self.client.get(reverse("article", args=[self.visible.slug]))
+        self.assertContains(detail, '<section class="related">')
+        author_url = reverse("author", args=[self.author.slug])
+        self.assertContains(detail, f'<a href="{author_url}">{self.author.display_name}</a>', count=1)
+        category = self.client.get(reverse("category", args=[self.category.slug]))
+        for response in (detail, category):
+            self.assertNotContains(response, private.display_name)
+            for title, slug, _, public_authors in cards:
+                with self.subTest(path=response.wsgi_request.path, article=slug):
+                    url = reverse("article", args=[slug])
+                    title_link = f'<h2><a href="{url}">{title}</a></h2>'
+                    self.assertContains(response, title_link)
+                    card = response.content.decode().split(title_link, 1)[1].split("</article>", 1)[0]
+                    self.assertIn("<time ", card)
+                    self.assertNotIn("Lesezeit", card)
+                    self.assertEqual(
+                        findall(r'<a href="(/autor/[^"]+)">([^<]+)</a>', card),
+                        [(reverse("author", args=[author.slug]), author.display_name) for author in public_authors],
+                    )
 
     def test_weekly_ranking_counts_only_recent_existing_hearts(self):
         second = Article.objects.create(title='Zweiter Beitrag', slug='zweiter', category=self.category, status='published')
